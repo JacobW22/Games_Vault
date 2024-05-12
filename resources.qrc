@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>resources/icons/steam-icon.png</file>
+    </qresource>
+    <qresource prefix="/covers">
+        <file>resources/covers/ghost_of_tsushima.png</file>
+        <file>resources/covers/doom.png</file>
+    </qresource>
+    <qresource prefix="/font">
+        <file>resources/fonts/Inter-VariableFont_slnt,wght.ttf</file>
+    </qresource>
+</RCC>
