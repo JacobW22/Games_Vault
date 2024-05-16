@@ -2,6 +2,8 @@
     "files": [
         "mainwindow.py",
         "form.ui",
-        "resources.qrc"
+        "resources.qrc",
+        "config.ini",
+        ".gitignore"
     ]
 }
