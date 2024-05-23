@@ -4,6 +4,8 @@
         "form.ui",
         "resources.qrc",
         "config.ini",
-        ".gitignore"
+        ".gitignore",
+        "Steam.py",
+        "Epic.py"
     ]
 }

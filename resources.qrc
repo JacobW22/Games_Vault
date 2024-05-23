@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/icons">
         <file>resources/icons/steam-icon.png</file>
+        <file>resources/icons/launch.png</file>
     </qresource>
     <qresource prefix="/covers">
         <file>resources/covers/ghost_of_tsushima.png</file>
