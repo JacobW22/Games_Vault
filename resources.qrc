@@ -2,6 +2,8 @@
     <qresource prefix="/icons">
         <file>resources/icons/steam-icon.png</file>
         <file>resources/icons/launch.png</file>
+        <file>resources/icons/search.png</file>
+        <file>resources/icons/search-white.png</file>
     </qresource>
     <qresource prefix="/covers">
         <file>resources/covers/ghost_of_tsushima.png</file>

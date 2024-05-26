@@ -8,16 +8,16 @@ import os
 
 from steam_web_api import Steam
 from PIL import Image
-from win11toast import toast
 from winotify import Notification
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QFrame, QWidget, QPushButton, QMessageBox, QSystemTrayIcon, QMenu
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QPushButton, QMessageBox, QSystemTrayIcon, QMenu
 from PySide6.QtGui import QPixmap, QImage, QCursor, QIcon, QAction
 from PySide6.QtCore import QThread, Signal, QRect, Qt
 
 from ui_form import Ui_MainWindow
 from Steam import FindSteamGames
 from Epic import FindEpicGames_Games
+from FlowLayout import FlowLayout
 
 # Keys
 config = configparser.ConfigParser()
@@ -29,6 +29,8 @@ class MainWindow(QMainWindow):
 
     steam = Steam(STEAM_API_KEY)
     col_index, row_index, last_row_index, container_id = 0, 0, 0, 0
+    games = None
+
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -50,23 +52,37 @@ class MainWindow(QMainWindow):
         self.tray_menu.addAction(self.quit_action)
         self.tray_icon.setContextMenu(self.tray_menu)
 
-        self.tray_icon.show()
 
         # Initialize buttons
+        self.OnConnectSteamClick()
         # self.ui.connect_steam.clicked.connect(self.OnConnectSteamClick())
-        self.ui.connect_epic.clicked.connect(lambda: FindEpicGames_Games(self))
-        self.ui.change_steam_directory.clicked.connect(lambda: FindSteamGames(self))
+        self.ui.find_epic_games_directory.clicked.connect(lambda: FindEpicGames_Games(self))
+        self.ui.find_steam_directory.clicked.connect(lambda: FindSteamGames(self))
 
+        self.ui.set_img_cover_width.valueChanged.connect(self.SetImageCoverWidth)
+        self.ui.search_games.textChanged.connect(self.SearchGameOnTextChanged)
+        self.flow_layout = FlowLayout(self.ui.Steam_recent_games_8)
+
+
+        self.tray_icon.activated.connect(self.show_normal)
         self.restore_action.triggered.connect(self.show_normal)
         self.hide_action.triggered.connect(self.hide_application)
         self.quit_action.triggered.connect(self.quit_application)
+        self.tray_icon.show()
+
 
     def closeEvent(self, event):
         event.ignore()
         self.hide()
 
-    def show_normal(self):
-        self.show()
+    def show_normal(self, reason):
+        if reason == QSystemTrayIcon.Trigger:
+              self.show()
+
+        elif reason == QSystemTrayIcon.Context:
+          # Right click event, ignore it
+          pass
+
 
     def hide_application(self):
         self.hide()
@@ -75,13 +91,16 @@ class MainWindow(QMainWindow):
         QApplication.instance().quit()
 
 
-
     # Overwrited method
     def resizeEvent(self, event):
-        fit_width = (self.ui.centralwidget.width()/7)-10
+        fit_width = (self.ui.centralwidget.width()/10)-10
+        self.ui.search_widget_container.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
+        self.ui.width_slider_container.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
 
-        for col,game in enumerate(self.ui.Steam_recent_games_8.children()):
+        for game in self.ui.Steam_recent_games.children():
             if game.children():
+                fit_width = self.ui.centralwidget.width()/(len(self.ui.Steam_recent_games.children()))
+
                 game.setProperty('minimumWidth', fit_width)
                 game.setProperty('maximumWidth', fit_width)
                 game.children()[0].setProperty('minimumWidth', fit_width)
@@ -114,41 +133,146 @@ class MainWindow(QMainWindow):
         self.FetchRecentSteamGames(steamid)
 
 
+    def SearchGameOnTextChanged(self, text):
+        for game in self.ui.Steam_recent_games_8.children()[1:]:
+            if text.lower() not in (game.objectName()).lower():
+                game.hide()
+            else:
+                game.show()
+
+
+    def SetImageCoverWidth(self, value):
+        fit_width = value
+        self.ui.img_cover_width_info.setText(f'{value}px')
+
+        for game in self.ui.Steam_recent_games_8.children():
+            if game.children():
+                game.setProperty('minimumWidth', fit_width)
+                game.setProperty('maximumWidth', fit_width)
+                game.children()[0].setProperty('minimumWidth', fit_width)
+                game.children()[0].setProperty('maximumWidth', fit_width)
+
+                game.children()[0].setProperty('minimumHeight', fit_width*1.5)
+                game.children()[0].setProperty('maximumHeight', fit_width*1.5)
+                game.setProperty('minimumHeight', fit_width*1.5)
+                game.setProperty('maximumHeight', fit_width*1.5)
+
+
+                game.children()[1].setProperty('geometry', QRect( 0, 0, game.children()[0].property('width'), game.children()[0].property('height')) )
+                game.children()[1].children()[0].setProperty('geometry', QRect( 0, 0, game.children()[0].property('width'), game.children()[0].property('height')) )
+
+                font = game.children()[1].font()
+                font.setPointSize(fit_width/10)
+                game.children()[0].setFont(font)
+                game.children()[1].setFont(font)
+
+
 
     def FetchRecentSteamGames(self, steamid):
         player_info = self.steam.users.get_user_recently_played_games(steamid)
-
         game_icon_urls = []
 
         for game in player_info["games"]:
-            game_icon_urls.append(f"https://steamcdn-a.akamaihd.net/steam/apps/{game['appid']}/library_600x900_2x.jpg")
+            try:
+                game_icon_urls.append([f"https://steamcdn-a.akamaihd.net/steam/apps/{game['appid']}/library_600x900_2x.jpg", game['appid'], game['name']])
+            except Exception as e:
+                game_icon_urls.append([[], game['appid'], game['name']])
+                print('Error fetching Image', e)
 
 
-        for url in game_icon_urls:
+
+        for url_and_appid in game_icon_urls:
             # testing - url = "https://steamcdn-a.akamaihd.net/steam/apps/1250410/library_600x900_2x.jpg"
 
-            image =  Image.open(requests.get(url, stream=True).raw)
-            q_image = QImage(image.tobytes(), image.width, image.height, QImage.Format.Format_RGB888)
+            try:
+                image =  Image.open(requests.get(url_and_appid[0], stream=True).raw)
+                q_image = QImage(image.tobytes(), image.width, image.height, QImage.Format.Format_RGB888)
+            except Exception:
+                q_image = None
 
 
-            label = QLabel()
-            pixmap = QPixmap.fromImage(q_image)
+            fit_width = self.ui.centralwidget.width()*1.75
 
-            label.setMinimumWidth(155)
-            label.setMinimumHeight(225)
+            container = QWidget()
+            label = QLabel(container)
+            btn_label = QLabel(container)
+            play_button = QPushButton(btn_label)
 
-            label.setMaximumWidth(155)
-            label.setMaximumHeight(225)
 
-            label.setBaseSize(155, 225)
+            if q_image:
+                pixmap = QPixmap.fromImage(q_image)
+                label.setPixmap(pixmap)
+            else:
+                label.setAlignment(Qt.AlignCenter)
+                font = label.font()
+                font.setPointSize(fit_width/10)
+                label.setFont(font)
+                label.setWordWrap(True)
+                label.setText(f'{url_and_appid[2]}')
+                label.setStyleSheet("background-color: rgb(42, 42, 42);")
 
-            label.setPixmap(pixmap)
+
+            container.setObjectName(f"{url_and_appid[2].encode().decode('unicode-escape')}")
+            container.setFixedSize(fit_width, fit_width*1.5)
+
+
+            label.setMinimumWidth(fit_width)
+            label.setMinimumHeight(fit_width*1.5)
+            label.setMaximumWidth(fit_width)
+            label.setMaximumHeight(fit_width*1.5)
+            label.setBaseSize(fit_width, fit_width*1.5)
             label.setScaledContents(True)
-            label.setFrameShape(QFrame.Shape.Box)
-            label.setFrameShadow(QFrame.Shadow.Plain)
-            label.setLineWidth(3)
 
-            self.ui.Steam_recent_games.layout().addWidget(label)
+
+            play_button.setObjectName(f'play_button recent{self.container_id}')
+            play_button.setProperty('geometry', QRect( 0, 0, fit_width, fit_width*1.5) )
+            play_button.setFont('Inter')
+            play_button.setCursor(QCursor(Qt.PointingHandCursor))
+            play_button.setStyleSheet(
+            """
+                QPushButton {
+                    background-color: rgba(0, 0, 0, 0);
+                    color: transparent;
+                }
+
+                QPushButton:pressed {
+                    background-color: rgba(0, 0, 0, 0.8);
+                    color: transparent;
+                }
+
+            """
+            )
+
+
+            btn_label.setProperty('geometry', QRect( 0, 0, fit_width, fit_width*1.5) )
+            btn_label.setAlignment(Qt.AlignCenter)
+            btn_label.setWordWrap(True)
+            font = label.font()
+            font.setPointSize(fit_width/8)
+            btn_label.setFont(font)
+            btn_label.setText(f"▶\n{url_and_appid[2].encode().decode('unicode-escape')}")
+            btn_label.setStyleSheet(
+            """
+                QLabel {
+                    background-color: rgba(0, 0, 0, 0);
+                    color: transparent;
+                }
+                QLabel:hover {
+                    background-color: rgba(0, 0, 0, 0.5);
+                    color: rgb(60, 255, 0);
+                }
+
+                QLabel:pressed {
+                    background-color: rgba(0, 0, 0, 0.8);
+                    color: transparent;
+                }
+
+            """
+            )
+
+            play_button.clicked.connect(lambda sacrificial="", appid=url_and_appid[1], appname=url_and_appid[2]: self.LaunchGame(appid, appname, provider='steam'))
+            url_and_appid.clear()
+            self.ui.Steam_recent_games.layout().addWidget(container)
             self.ui.Steam_recent_games.update()
 
 
@@ -173,7 +297,7 @@ class MainWindow(QMainWindow):
             label = QLabel(container)
             btn_label = QLabel(container)
             play_button = QPushButton(btn_label)
-            fit_width = self.ui.centralwidget.width()/7.5
+            fit_width = self.ui.set_img_cover_width.value()
 
             if image_found:
                 pixmap = QPixmap.fromImage(q_image)
@@ -188,7 +312,7 @@ class MainWindow(QMainWindow):
                 label.setStyleSheet("background-color: rgb(42, 42, 42);")
 
 
-            container.setObjectName(f'container {self.container_id}')
+            container.setObjectName(f"{app_name.encode().decode('unicode-escape')}")
             container.setFixedSize(fit_width, fit_width*1.5)
 
 
@@ -249,7 +373,8 @@ class MainWindow(QMainWindow):
             play_button.clicked.connect(lambda: self.LaunchGame(info, app_name, provider))
 
             children_count = len(self.ui.Steam_recent_games_8.children())
-            self.ui.Steam_recent_games_8.layout().addWidget(container, self.row_index, self.col_index)
+            # self.ui.Steam_recent_games_8.layout().addWidget(container, self.row_index, self.col_index)
+            self.ui.Steam_recent_games_8.layout().addWidget(container)
 
             self.row_index = math.floor(children_count//7)
 
@@ -260,6 +385,8 @@ class MainWindow(QMainWindow):
 
             self.last_row_index = self.row_index
             self.container_id += 1
+
+            self.ui.installed_games_quantity.setText(f'{len(self.ui.Steam_recent_games_8.children())-1} Games')
 
         except Exception as e:
             print('Error in AddGametoGui: ', e)
@@ -279,13 +406,14 @@ class MainWindow(QMainWindow):
 
     def LaunchGame(self, info, app_name, provider):
         if provider == 'steam':
-            command = f"start steam://rungameid/{info[0]}"
+            command = f"start steam://rungameid/{info}"
         elif provider == 'epic':
-            command = f"start com.epicgames.launcher://apps/{info[0]}?action=launch"
+            pass
+            command = f"start com.epicgames.launcher://apps/{info}?action=launch"
 
         try:
             subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            toast = Notification(
+            Notification(
                 app_id="Games Vault",
                 title="Launching Game",
                 msg=f'{app_name}',
@@ -294,11 +422,11 @@ class MainWindow(QMainWindow):
 
             self.showMinimized()
 
-        except Exception as e:
-            toast = Notification(
+        except Exception:
+            Notification(
                 app_id="Games Vault",
                 title='Error Ocurred',
-                msg=f'Error occured while launching {app_name}{e}'
+                msg=f'Error occured while launching {app_name}'
             ).show()
 
 
@@ -332,10 +460,10 @@ class Worker(QThread):
 
                 q_image = QImage(image.tobytes(), image.width, image.height, QImage.Format.Format_RGB888)
 
-                self.progress.emit(q_image, [url_and_appid[2][1], url_and_appid[0]], url_and_appid[2][0], True, self.provider)
+                self.progress.emit(q_image, [url_and_appid[2][1][0], url_and_appid[0]], url_and_appid[2][0], True, self.provider)
 
-            except Exception as e:
-                self.progress.emit(QImage, [url_and_appid[2][1], url_and_appid[0]], url_and_appid[2][0], False, self.provider)
+            except Exception:
+                self.progress.emit(QImage, [url_and_appid[2][1][0], url_and_appid[0]], url_and_appid[2][0], False, self.provider)
 
         self.finished.emit()
 
