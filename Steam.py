@@ -3,7 +3,10 @@ import vdf
 import configparser
 
 from steam_web_api import Steam
-from PySide6.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtWidgets import QFileDialog
+
+from MessageBox import MessageBox
+from ErrorMessage import ErrorMessage
 
 # Keys
 config = configparser.ConfigParser()
@@ -32,12 +35,14 @@ def FindSteamGames(self, directory=f"{os.getenv('SystemDrive')}\Program Files (x
 
 
 
-            if len(app_ids) == 1:
-                self.ui.Steam_dir_info.setText(f'✔ Found {len(app_ids)} Games')
-            else:
-                self.ui.Steam_dir_info.setText(f'✔ Found {len(app_ids)} Games')
+            if self.database.conn:
+                sql = "UPDATE User SET installed_games_from_steam = ? WHERE id = 1"
+                self.database.execute_query(self.database.conn, sql, [(len(app_ids))])
 
-            self.ui.Steam_dir_info.setStyleSheet(
+
+            self.ui.steam_dir_info.setText(f'✔ {len(app_ids)} Games installed')
+
+            self.ui.steam_dir_info.setStyleSheet(
                 """
                     QLabel {
                         color: rgb(0, 255, 0);
@@ -48,12 +53,23 @@ def FindSteamGames(self, directory=f"{os.getenv('SystemDrive')}\Program Files (x
             self.FetchInstalledGames(app_ids, app_names, 'steam')
 
     except Exception:
-        self.ShowErrorDialog("Can't Find Game Libraries")
+        error_msg = ErrorMessage("Can't Find Game Libraries")
+        error_msg.exec()
+
         options = QFileDialog.Options()
         options |= QFileDialog.ShowDirsOnly
 
-        info_message = "Please select your main Steam directory."
-        QMessageBox.information(None, "Steam", info_message)
+        info_message = """
+        <html><body>
+        <center>
+        <p>Please select your main Steam directory.</p>
+        <a style="color: lightblue;" href="https://www.partitionwizard.com/partitionmanager/where-does-steam-install-games.html">How to find my Steam Directory</a>
+        </center>
+        </body></html>
+        """
+        msg_box = MessageBox("Steam", info_message)
+        msg_box.exec()
+
 
         directory = QFileDialog.getExistingDirectory(
            None,

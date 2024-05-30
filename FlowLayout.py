@@ -1,5 +1,7 @@
 from PySide6 import QtWidgets
 from PySide6 import QtCore
+from PySide6.QtWidgets import QSizePolicy
+from PySide6.QtCore import Qt, QRect, QPoint
 
 class FlowLayout(QtWidgets.QLayout):
     def __init__(self, parent=None, hspacing=-1, vspacing=-1):
@@ -65,35 +67,49 @@ class FlowLayout(QtWidgets.QLayout):
         return size
 
     def doLayout(self, rect, testonly):
-        left, top, right, bottom = self.getContentsMargins()
-        effective = rect.adjusted(+left, +top, -right, -bottom)
-        x = effective.x()
-        y = effective.y()
-        lineheight = 0
-        for item in self._items:
-            widget = item.widget()
-            hspace = self.horizontalSpacing()
-            if hspace == -1:
-                hspace = widget.style().layoutSpacing(
-                    QtWidgets.QSizePolicy.PushButton,
-                    QtWidgets.QSizePolicy.PushButton, QtCore.Qt.Horizontal)
-            vspace = self.verticalSpacing()
-            if vspace == -1:
-                vspace = widget.style().layoutSpacing(
-                    QtWidgets.QSizePolicy.PushButton,
-                    QtWidgets.QSizePolicy.PushButton, QtCore.Qt.Vertical)
-            nextX = x + item.sizeHint().width() + hspace
-            if nextX - hspace > effective.right() and lineheight > 0:
-                x = effective.x()
-                y = y + lineheight + vspace
-                nextX = x + item.sizeHint().width() + hspace
-                lineheight = 0
-            if not testonly:
-                item.setGeometry(
-                    QtCore.QRect(QtCore.QPoint(x, y), item.sizeHint()))
-            x = nextX
-            lineheight = max(lineheight, item.sizeHint().height())
-        return y + lineheight - rect.y() + bottom
+           lineheight = 0
+           row_widths = [0]
+           row = 0
+           spacing = self.spacing()
+
+           for item in self._items:
+               wid = item.widget()
+               space_x = spacing + wid.style().layoutSpacing(
+                   QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal)
+               item_width = item.sizeHint().width() + space_x
+               if row_widths[row] + item_width < rect.width():
+                   row_widths[row] += item_width
+               else:
+                   row += 1
+                   row_widths.append(item_width)
+
+           x = int((rect.width() - row_widths[0]) / 2)
+           y = rect.top()
+
+           row = 0
+           for item in self._items:
+               style = item.widget().style()
+               layout_spacing_x = style.layoutSpacing(
+                   QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal)
+               layout_spacing_y = style.layoutSpacing(
+                   QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical)
+               space_x = spacing + layout_spacing_x
+               space_y = spacing + layout_spacing_y
+               next_x = x + item.sizeHint().width() + space_x
+               if next_x - space_x > rect.right() and lineheight > 0:
+                   row += 1
+                   x = int((rect.width() - row_widths[row]) / 2)
+                   y = y + lineheight + space_y
+                   next_x = x + item.sizeHint().width() + space_x
+                   lineheight = 0
+
+               if not testonly:
+                   item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
+
+               x = next_x
+               lineheight = max(lineheight, item.sizeHint().height())
+
+           return y + lineheight - rect.y()
 
     def smartSpacing(self, pm):
         parent = self.parent()

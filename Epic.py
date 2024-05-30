@@ -4,10 +4,10 @@ import json
 import configparser
 
 from steam_web_api import Steam
+from PySide6.QtWidgets import QFileDialog
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFileDialog, QMessageBox
-
+from MessageBox import MessageBox
+from ErrorMessage import ErrorMessage
 
 # Keys
 config = configparser.ConfigParser()
@@ -39,8 +39,12 @@ def FindEpicGames_Games(self, manifest_folder = f"{os.getenv('SystemDrive')}\Pro
                         else:
                             app_ids.append('')
 
-        self.ui.Epic_dir_info.setText(f'✔ Found {len(app_ids)} games')
-        self.ui.Epic_dir_info.setStyleSheet(
+        if self.database.conn:
+            sql = "UPDATE User SET installed_games_from_epic = ? WHERE id = 1"
+            self.database.execute_query(self.database.conn, sql, [(len(app_ids))])
+
+        self.ui.epic_dir_info.setText(f'✔ {len(app_ids)} Games installed')
+        self.ui.epic_dir_info.setStyleSheet(
             """
                 QLabel {
                     color: rgb(0, 255, 0);
@@ -51,7 +55,8 @@ def FindEpicGames_Games(self, manifest_folder = f"{os.getenv('SystemDrive')}\Pro
         self.FetchInstalledGames(app_ids, app_names, 'epic')
 
     except Exception:
-        self.ShowErrorDialog(f"Can't Find Epic Games Program Data Folder")
+        error_msg = ErrorMessage("Can't Find Epic Games Program Data Folder")
+        error_msg.exec()
 
         options = QFileDialog.Options()
         options |= QFileDialog.ShowDirsOnly
@@ -59,16 +64,15 @@ def FindEpicGames_Games(self, manifest_folder = f"{os.getenv('SystemDrive')}\Pro
 
         info_message = """
             <html><body>
+            <center>
             <p>Please select your 'Program Data' folder</p>
-            <a style="color: lightblue;" href="https://www.minitool.com/data-recovery/program-data-folder-windows-10.html">See how to find Program Data folder</a>
+            <a style="color: lightblue;" href="https://www.minitool.com/data-recovery/program-data-folder-windows-10.html">How to find my Program Data folder</a>
+            </center>
             </body></html>
         """
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle("Epic games")
-        msg_box.setTextFormat(Qt.RichText)
-        msg_box.setText(info_message)
-        msg_box.exec()
 
+        msg_box = MessageBox("Epic games", info_message)
+        msg_box.exec()
 
         directory = QFileDialog.getExistingDirectory(
            None,

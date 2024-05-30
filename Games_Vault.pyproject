@@ -7,6 +7,12 @@
         ".gitignore",
         "Steam.py",
         "Epic.py",
-        "FlowLayout.py"
+        "FlowLayout.py",
+        "database.py",
+        "InputDialog.py",
+        "MessageBox.py",
+        "RichTextPushButton.py",
+        "CircularAvatar.py",
+        "ErrorMessage.py"
     ]
 }
