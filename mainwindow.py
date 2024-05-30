@@ -12,7 +12,7 @@ from PIL.ImageQt import ImageQt
 from winotify import Notification
 from ctypes import wintypes
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QPushButton, QMessageBox, QSystemTrayIcon, QMenu, QDialogButtonBox, QSizePolicy
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QPushButton, QMessageBox, QSystemTrayIcon, QMenu, QSizePolicy, QVBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QCursor, QIcon, QAction
 from PySide6.QtCore import QThread, Signal, QRect, Qt
 
@@ -22,7 +22,6 @@ from Epic import FindEpicGames_Games
 from FlowLayout import FlowLayout
 from database import Database
 from InputDialog import InputDialog
-from MessageBox import MessageBox
 from ErrorMessage import ErrorMessage
 from RichTextPushButton import RichTextPushButton
 from CircularAvatar import mask_image
@@ -65,10 +64,12 @@ class MainWindow(QMainWindow):
         self.hide_action = QAction("Hide", self)
         self.quit_action = QAction("Quit", self)
 
+        self.tray_menu.setStyleSheet("QMenu::item { height: 50px; }")
+
+        self.tray_menu.addSeparator()
         self.tray_menu.addAction(self.restore_action)
         self.tray_menu.addAction(self.hide_action)
         self.tray_menu.addAction(self.quit_action)
-        self.tray_menu.addSeparator()
         self.tray_icon.setContextMenu(self.tray_menu)
 
         # Layout
@@ -129,7 +130,6 @@ class MainWindow(QMainWindow):
         QApplication.instance().quit()
 
 
-    # Overwrited method
     def resizeEvent(self, event):
         self.ui.search_widget_container.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
         self.ui.width_slider_container.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
@@ -162,7 +162,7 @@ class MainWindow(QMainWindow):
                 user_info = self.steam.users.get_user_details(steamid)["player"]
                 self.ui.user_display_name.setText(f"{user_info['personaname']}")
 
-                response = requests.get(user_info['avatarmedium'], stream=True)
+                response = requests.get(user_info['avatarfull'], stream=True)
                 image =  Image.open(response.raw)
                 q_image = QImage(ImageQt(image))
                 pixmap = mask_image(q_image)
@@ -172,6 +172,13 @@ class MainWindow(QMainWindow):
                 if len(self.ui.Steam_recent_games.children()) > 1:
                     for game in self.ui.Steam_recent_games.children()[1:]:
                         game.deleteLater()
+
+
+                context_menu_items = ["Open", "Hide", "Quit"]
+
+                for action in self.tray_menu.actions():
+                    if action.text() not in context_menu_items:
+                        action.deleteLater()
 
                 self.FetchRecentSteamGames(steamid)
 
@@ -219,7 +226,7 @@ class MainWindow(QMainWindow):
                 info = self.steam.users.get_user_details(steamid)["player"]
                 self.ui.user_display_name.setText(f"{info['personaname']}")
 
-                response = requests.get(info['avatarmedium'], stream=True)
+                response = requests.get(info['avatarfull'], stream=True)
                 image =  Image.open(response.raw)
                 q_image = QImage(ImageQt(image))
                 pixmap = mask_image(q_image)
@@ -391,8 +398,11 @@ class MainWindow(QMainWindow):
             """
             )
 
+            font = self.tray_menu.font()
+            font.setPointSize(12)
             self.play_game = QAction(f"{url_and_appid[2]}", self)
-            self.tray_menu.addAction(self.play_game)
+            self.play_game.setFont(font)
+            self.tray_menu.insertAction(self.tray_menu.actions()[0], self.play_game)
             self.play_game.triggered.connect(lambda sacrificial="", appid=url_and_appid[1], appname=url_and_appid[2]: self.LaunchGame(appid, appname, provider='steam'))
             play_button.clicked.connect(lambda sacrificial="", appid=url_and_appid[1], appname=url_and_appid[2]: self.LaunchGame(appid, appname, provider='steam'))
 

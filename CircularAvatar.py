@@ -1,7 +1,7 @@
 from PySide6.QtGui import QImage, QPixmap, QPainter, QBrush, Qt, QColor, QPainterPath
 from PySide6.QtCore import QRect, QPoint
 
-def mask_image(q_image, size=64, border_color=QColor(0, 255, 0), border_width=2):
+def mask_image(q_image, size=64, border_color=QColor(0, 255, 0), border_width=8):
     # Load image
     image = q_image
 
