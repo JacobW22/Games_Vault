@@ -1,18 +1,20 @@
 {
     "files": [
         "mainwindow.py",
-        "form.ui",
         "resources.qrc",
         "config.ini",
         ".gitignore",
         "Steam.py",
         "Epic.py",
-        "FlowLayout.py",
         "database.py",
-        "InputDialog.py",
-        "MessageBox.py",
-        "RichTextPushButton.py",
-        "CircularAvatar.py",
-        "ErrorMessage.py"
+        "layout/CircularAvatar.py",
+        "layout/ErrorMessage.py",
+        "layout/FlowLayout.py",
+        "layout/form.ui",
+        "layout/InputDialog.py",
+        "layout/MessageBox.py",
+        "layout/RichTextPushButton.py",
+        "layout/ui_form.py",
+        "layout/__init__.py"
     ]
 }
