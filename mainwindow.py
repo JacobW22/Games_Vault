@@ -45,6 +45,7 @@ class MainWindow(QMainWindow):
     steam = steam_api(STEAM_API_KEY)
     container_id = 0
     games = None
+    threads = []
 
 
     def __init__(self, parent=None):
@@ -306,68 +307,66 @@ class MainWindow(QMainWindow):
                 label.setText(f'{app_name}')
                 label.setStyleSheet("background-color: rgb(42, 42, 42);")
 
-            if app_name.encode().decode('unicode-escape') not in [x.objectName() for x in self.ui.Steam_recent_games_8.children()]:
-                container.setObjectName(f"{app_name.encode().decode('unicode-escape')}")
-                container.setFixedSize(fit_width, fit_width*1.5)
+            container.setObjectName(f"{app_name.encode().decode('unicode-escape')}")
+            container.setFixedSize(fit_width, fit_width*1.5)
 
-                label.setMinimumWidth(fit_width)
-                label.setMinimumHeight(fit_width*1.5)
-                label.setMaximumWidth(fit_width)
-                label.setMaximumHeight(fit_width*1.5)
-                label.setBaseSize(fit_width, fit_width*1.5)
-                label.setScaledContents(True)
+            label.setMinimumWidth(fit_width)
+            label.setMinimumHeight(fit_width*1.5)
+            label.setMaximumWidth(fit_width)
+            label.setMaximumHeight(fit_width*1.5)
+            label.setBaseSize(fit_width, fit_width*1.5)
+            label.setScaledContents(True)
 
-                play_button.setObjectName(f'play_button {self.container_id}')
-                play_button.setProperty('geometry', QRect( 0, 0, fit_width, fit_width*1.5) )
-                play_button.setFont('Inter')
-                play_button.setCursor(QCursor(Qt.PointingHandCursor))
-                play_button.setStyleSheet(
-                """
-                    QPushButton {
-                        background-color: rgba(0, 0, 0, 0);
-                        color: transparent;
-                    }
+            play_button.setObjectName(f'play_button {self.container_id}')
+            play_button.setProperty('geometry', QRect( 0, 0, fit_width, fit_width*1.5) )
+            play_button.setFont('Inter')
+            play_button.setCursor(QCursor(Qt.PointingHandCursor))
+            play_button.setStyleSheet(
+            """
+                QPushButton {
+                    background-color: rgba(0, 0, 0, 0);
+                    color: transparent;
+                }
 
-                    QPushButton:pressed {
-                        background-color: rgba(0, 0, 0, 0.8);
-                        color: transparent;
-                    }
+                QPushButton:pressed {
+                    background-color: rgba(0, 0, 0, 0.8);
+                    color: transparent;
+                }
 
-                """
-                )
-                btn_label.setProperty('geometry', QRect( 0, 0, fit_width, fit_width*1.5) )
-                btn_label.setAlignment(Qt.AlignCenter)
-                btn_label.setWordWrap(True)
-                font = label.font()
-                font.setPointSize(fit_width/8)
-                btn_label.setFont(font)
-                btn_label.setText(f"▶\n{app_name.encode().decode('unicode-escape')}")
-                btn_label.setStyleSheet(
-                """
-                    QLabel {
-                        background-color: rgba(0, 0, 0, 0);
-                        color: transparent;
-                    }
-                    QLabel:hover {
-                        background-color: rgba(0, 0, 0, 0.5);
-                        color: rgb(60, 255, 0);
-                    }
+            """
+            )
+            btn_label.setProperty('geometry', QRect( 0, 0, fit_width, fit_width*1.5) )
+            btn_label.setAlignment(Qt.AlignCenter)
+            btn_label.setWordWrap(True)
+            font = label.font()
+            font.setPointSize(fit_width/8)
+            btn_label.setFont(font)
+            btn_label.setText(f"▶\n{app_name.encode().decode('unicode-escape')}")
+            btn_label.setStyleSheet(
+            """
+                QLabel {
+                    background-color: rgba(0, 0, 0, 0);
+                    color: transparent;
+                }
+                QLabel:hover {
+                    background-color: rgba(0, 0, 0, 0.5);
+                    color: rgb(60, 255, 0);
+                }
 
-                    QLabel:pressed {
-                        background-color: rgba(0, 0, 0, 0.8);
-                        color: transparent;
-                    }
+                QLabel:pressed {
+                    background-color: rgba(0, 0, 0, 0.8);
+                    color: transparent;
+                }
 
-                """
-                )
-                play_button.clicked.connect(lambda: self.LaunchGame(launch_id, app_name, provider))
+            """
+            )
+            play_button.clicked.connect(lambda: self.LaunchGame(launch_id, app_name, provider))
 
-                self.ui.Steam_recent_games_8.layout().addWidget(container)
-                self.ui.installed_games_quantity.setText(f'{len(self.ui.Steam_recent_games_8.children())-1} Games')
+            self.ui.Steam_recent_games_8.layout().addWidget(container)
+            self.ui.installed_games_quantity.setText(f'{len(self.ui.Steam_recent_games_8.children())-1} Games')
 
-        except Exception as e:
-            print('Error in AddGametoGui: ', e)
-
+        except Exception:
+            pass
 
     # Database check and launching games
     def check_db(self):
@@ -457,6 +456,7 @@ class MainWindow(QMainWindow):
 
     # Multi-threading
     def FetchInstalledGames(self, app_ids, app_names, provider):
+        try:
             self.thread = QThread()
             self.worker = Worker(app_ids, app_names, provider)
             self.worker.moveToThread(self.thread)
@@ -467,7 +467,11 @@ class MainWindow(QMainWindow):
             self.worker.finished.connect(self.worker.deleteLater)
             self.thread.finished.connect(self.thread.deleteLater)
 
+            self.threads.append(self.thread)
             self.thread.start()
+
+        except Exception:
+            pass
 
 
 class Worker(QThread):
@@ -486,9 +490,8 @@ class Worker(QThread):
         for appid_and_name in zip(self.app_ids, self.app_names):
             try:
                 game_icon_urls.append([f"https://steamcdn-a.akamaihd.net/steam/apps/{appid_and_name[0]}/library_600x900_2x.jpg", appid_and_name[0], appid_and_name[1]])
-            except Exception as e:
+            except Exception:
                 game_icon_urls.append([[], appid_and_name[0], appid_and_name[1]])
-                print('Error fetching Image', e)
 
         for url_and_appid in game_icon_urls:
             try:
@@ -502,7 +505,6 @@ class Worker(QThread):
                 self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, None)
 
         self.finished.emit()
-
 
 
 if __name__ == "__main__":

@@ -6,8 +6,10 @@ import requests
 from steam_web_api import Steam as steam_api
 from PIL import Image
 from PIL.ImageQt import ImageQt
+
 from PySide6.QtWidgets import QFileDialog
 from PySide6.QtGui import QImage
+from PySide6.QtCore import QThread, Signal
 
 from layout.MessageBox import MessageBox
 from layout.ErrorMessage import ErrorMessage
@@ -24,38 +26,10 @@ class Steam:
 
     def FindSteamGames(self, main_window, directory=f"{os.getenv('SystemDrive')}\Program Files (x86)\Steam"):
         try:
-            with open(f"{directory}/steamapps/libraryfolders.vdf", "r") as file:
-                vdf_with_libraries = file.read()
-                parsed_vdf = vdf.loads(vdf_with_libraries)
-                libraries = {index: folder['apps'].keys() for index, folder in parsed_vdf['libraryfolders'].items()}
-
-                app_ids = [key for sub_dict in libraries.values() for key in sub_dict]
-                app_names = []
-
-                for appid in app_ids:
-                    game = self.steam.apps.search_games(appid)
-
-                    if game['apps']:
-                        app_names.append([game['apps'][0]['name'], appid])
-                    else:
-                        app_names.append(['Unknown', appid])
-
-
-                if main_window.database.conn:
-                    sql = "UPDATE User SET installed_games_from_steam = ? WHERE id = 1"
-                    main_window.database.execute_query(main_window.database.conn, sql, [(len(app_ids))])
-
-
-                main_window.ui.steam_dir_info.setText(f'✔ {len(app_ids)} Games installed')
-                main_window.ui.steam_dir_info.setStyleSheet(
-                    """
-                        QLabel {
-                            color: rgb(0, 255, 0);
-                        }
-                    """
-                )
-                main_window.ui.tabWidget.setCurrentWidget(main_window.ui.All_games)
-                main_window.FetchInstalledGames(app_ids, app_names, 'steam')
+            if directory:
+                self.RunInThread(main_window, directory, func="FindSteamGames")
+            else:
+                raise Exception
 
         except Exception:
             error_msg = ErrorMessage("Can't Find Game Libraries")
@@ -81,8 +55,9 @@ class Steam:
                "",
                options=options,
             )
+
             if directory:
-                self.FindSteamGames(main_window, directory)
+                self.RunInThread(main_window, directory, func="FindSteamGames")
 
 
     def FetchRecentSteamGames(self, steamid):
@@ -154,3 +129,73 @@ class Steam:
                 """
                 error_msg = ErrorMessage(info_message)
                 error_msg.exec()
+
+
+    def UpdateSteamGamesNumberInDb(self, main_window, games, isError):
+        if isError == False:
+            if main_window.database.conn:
+                sql = "UPDATE User SET installed_games_from_steam = ? WHERE id = 1"
+                main_window.database.execute_query(main_window.database.conn, sql, [games])
+        else:
+            self.FindSteamGames(main_window, directory=None)
+
+
+    # Multi-threading
+    def RunInThread(self, main_window, directory, func):
+        self.thread = QThread()
+        self.worker1 = Worker1(self.steam, main_window, directory)
+        self.worker1.moveToThread(self.thread)
+        if func == "FindSteamGames":
+            self.thread.started.connect(self.worker1.FindSteamGamesInThread)
+            self.worker1.finished.connect(self.thread.quit)
+            self.worker1.finished.connect(self.worker1.deleteLater)
+            self.worker1.progress.connect(self.UpdateSteamGamesNumberInDb)
+            self.thread.finished.connect(self.thread.deleteLater)
+
+        self.thread.start()
+
+
+class Worker1(QThread):
+    finished = Signal()
+    progress = Signal(object, int, bool)
+
+    def __init__(self, steam, main_window, directory, parent=None):
+        super().__init__(parent)
+        self.steam = steam
+        self.main_window = main_window
+        self.directory = directory
+
+    def FindSteamGamesInThread(self):
+        try:
+            with open(f"{self.directory}/steamapps/libraryfolders.vdf", "r") as file:
+                vdf_with_libraries = file.read()
+                parsed_vdf = vdf.loads(vdf_with_libraries)
+                libraries = {index: folder['apps'].keys() for index, folder in parsed_vdf['libraryfolders'].items()}
+
+                app_ids = [key for sub_dict in libraries.values() for key in sub_dict]
+                app_names = []
+
+                for appid in app_ids:
+                    game = self.steam.apps.search_games(appid)
+
+                    if game['apps']:
+                        app_names.append([game['apps'][0]['name'], appid])
+                    else:
+                        app_names.append(['Unknown', appid])
+
+                self.progress.emit(self.main_window, len(app_ids), isError:=False)
+                self.main_window.ui.steam_dir_info.setText(f'✔ {len(app_ids)} Games installed')
+                self.main_window.ui.steam_dir_info.setStyleSheet(
+                    """
+                        QLabel {
+                            color: rgb(0, 255, 0);
+                        }
+                    """
+                )
+                self.main_window.ui.tabWidget.setCurrentWidget(self.main_window.ui.All_games)
+                self.main_window.FetchInstalledGames(app_ids, app_names, 'steam')
+                self.finished.emit()
+
+        except Exception:
+            self.progress.emit(self.main_window, str, isError:=True)
+            self.finished.emit()
