@@ -45,6 +45,7 @@ class Database:
             id INTEGER PRIMARY KEY,
             steam_id INTEGER,
             game_cover_img INTEGER,
+            owned_game_cover_img INTEGER,
             first_time_visit BOOLEAN NOT NULL,
             installed_games_from_epic INTEGER,
             installed_games_from_steam INTEGER
@@ -52,7 +53,7 @@ class Database:
         """
 
         sql_insert_into_user_table = """
-        INSERT INTO User VALUES (NULL, 0, 140, TRUE, 0, 0);
+        INSERT INTO User VALUES (NULL, 0, 140, 200, TRUE, 0, 0);
         """
 
         sql_create_installed_games_table  = """
@@ -73,6 +74,7 @@ class Database:
             launch_id TEXT NOT NULL PRIMARY KEY,
             app_name TEXT NOT NULL,
             provider TEXT NOT NULL,
+            image BLOB,
 
             FOREIGN KEY(user_id) REFERENCES User(id)
         );

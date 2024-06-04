@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 13.0.1, 2024-06-01T20:04:42. -->
+<!-- Written by QtCreator 13.0.1, 2024-06-04T17:12:57. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -277,7 +277,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">layout\CircularAvatar.py</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.G:/Games_Vault/Games_Vault/layout/CircularAvatar.py</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/Games_Vault/Games_Vault/layout/CircularAvatar.py</value>
-    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">false</value>
+    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
     <value type="QString" key="PythonEditor.RunConfiguation.Script">G:\Games_Vault\Games_Vault\layout\CircularAvatar.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
@@ -296,7 +296,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">layout\ErrorMessage.py</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.G:/Games_Vault/Games_Vault/layout/ErrorMessage.py</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/Games_Vault/Games_Vault/layout/ErrorMessage.py</value>
-    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">false</value>
+    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
     <value type="QString" key="PythonEditor.RunConfiguation.Script">G:\Games_Vault\Games_Vault\layout\ErrorMessage.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
@@ -315,7 +315,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">layout\FlowLayout.py</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.G:/Games_Vault/Games_Vault/layout/FlowLayout.py</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/Games_Vault/Games_Vault/layout/FlowLayout.py</value>
-    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">false</value>
+    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
     <value type="QString" key="PythonEditor.RunConfiguation.Script">G:\Games_Vault\Games_Vault\layout\FlowLayout.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
@@ -334,7 +334,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">layout\InputDialog.py</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.G:/Games_Vault/Games_Vault/layout/InputDialog.py</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/Games_Vault/Games_Vault/layout/InputDialog.py</value>
-    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">false</value>
+    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
     <value type="QString" key="PythonEditor.RunConfiguation.Script">G:\Games_Vault\Games_Vault\layout\InputDialog.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
@@ -353,7 +353,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">layout\MessageBox.py</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.G:/Games_Vault/Games_Vault/layout/MessageBox.py</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/Games_Vault/Games_Vault/layout/MessageBox.py</value>
-    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">false</value>
+    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
     <value type="QString" key="PythonEditor.RunConfiguation.Script">G:\Games_Vault\Games_Vault\layout\MessageBox.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
@@ -391,7 +391,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">layout\RichTextPushButton.py</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.G:/Games_Vault/Games_Vault/layout/RichTextPushButton.py</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/Games_Vault/Games_Vault/layout/RichTextPushButton.py</value>
-    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">false</value>
+    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
     <value type="QString" key="PythonEditor.RunConfiguation.Script">G:\Games_Vault\Games_Vault\layout\RichTextPushButton.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
@@ -410,7 +410,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">layout\ui_form.py</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.G:/Games_Vault/Games_Vault/layout/ui_form.py</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/Games_Vault/Games_Vault/layout/ui_form.py</value>
-    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">false</value>
+    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
     <value type="QString" key="PythonEditor.RunConfiguation.Script">G:\Games_Vault\Games_Vault\layout\ui_form.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
@@ -429,11 +429,28 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">layout\__init__.py</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.G:/Games_Vault/Games_Vault/layout/__init__.py</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/Games_Vault/Games_Vault/layout/__init__.py</value>
-    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">false</value>
+    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
     <value type="QString" key="PythonEditor.RunConfiguation.Script">G:\Games_Vault\Games_Vault\layout\__init__.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory.default">G:/Games_Vault/Games_Vault/layout</value>
+   </valuemap>
+   <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.23">
+    <value type="bool" key="Analyzer.Perf.Settings.UseGlobalSettings">true</value>
+    <value type="bool" key="Analyzer.QmlProfiler.Settings.UseGlobalSettings">true</value>
+    <value type="int" key="Analyzer.Valgrind.Callgrind.CostFormat">0</value>
+    <value type="bool" key="Analyzer.Valgrind.Settings.UseGlobalSettings">true</value>
+    <valuelist type="QVariantList" key="CustomOutputParsers"/>
+    <value type="int" key="PE.EnvironmentAspect.Base">2</value>
+    <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
+    <value type="bool" key="PE.EnvironmentAspect.PrintOnRun">false</value>
+    <value type="QString" key="PerfRecordArgsId">-e cpu-cycles --call-graph &quot;dwarf,4096&quot; -F 250</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">layout\Truncated_Label.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.G:/Games_Vault/Games_Vault/layout/Truncated_Label.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/Games_Vault/Games_Vault/layout/Truncated_Label.py</value>
+    <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
+    <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
+    <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.3">
     <value type="bool" key="Analyzer.Perf.Settings.UseGlobalSettings">true</value>
@@ -558,7 +575,7 @@
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
    </valuemap>
-   <value type="qlonglong" key="ProjectExplorer.Target.RunConfigurationCount">23</value>
+   <value type="qlonglong" key="ProjectExplorer.Target.RunConfigurationCount">24</value>
   </valuemap>
  </data>
  <data>

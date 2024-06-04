@@ -23,16 +23,17 @@ STEAM_API_KEY = config['API_KEYS']['STEAM_API_KEY']
 
 class Steam:
     steam = steam_api(STEAM_API_KEY)
+    threads = []
 
     def FindSteamGames(self, main_window, directory=f"{os.getenv('SystemDrive')}\Program Files (x86)\Steam"):
         try:
             if directory:
-                self.RunInThread(main_window, directory, func="FindSteamGames")
+                self.RunInThread(main_window, func="FindSteamGames", directory=directory)
             else:
                 raise Exception
 
         except Exception:
-            error_msg = ErrorMessage("Can't Find Game Libraries")
+            error_msg = ErrorMessage("Can't Find Steam Libraries")
             error_msg.exec()
 
             options = QFileDialog.Options()
@@ -57,7 +58,7 @@ class Steam:
             )
 
             if directory:
-                self.RunInThread(main_window, directory, func="FindSteamGames")
+                self.RunInThread(main_window, func="FindSteamGames", directory=directory)
 
 
     def FetchRecentSteamGames(self, steamid):
@@ -113,6 +114,12 @@ class Steam:
                         action.deleteLater()
 
                 main_window.UpdateRecentGamesGUI(self.FetchRecentSteamGames(steamid))
+                try:
+                    if main_window.ui.Owned_games_content.children()[1].objectName() == "info_label":
+                        main_window.ui.Owned_games_content.children()[1].deleteLater()
+                except Exception:
+                    pass
+                self.RunInThread(main_window, "FindOwnedSteamGames", steamid=steamid)
 
                 if main_window.database.conn:
                     sql = "UPDATE user SET steam_id = ? WHERE id = 1;"
@@ -141,18 +148,34 @@ class Steam:
 
 
     # Multi-threading
-    def RunInThread(self, main_window, directory, func):
+    def RunInThread(self, main_window, func, steamid=None,  directory=None):
         self.thread = QThread()
-        self.worker1 = Worker1(self.steam, main_window, directory)
-        self.worker1.moveToThread(self.thread)
+        self.threads.append(self.thread)
+
         if func == "FindSteamGames":
+            self.worker1 = Worker1(self.steam, main_window, directory)
+            self.worker1.moveToThread(self.thread)  
+
             self.thread.started.connect(self.worker1.FindSteamGamesInThread)
             self.worker1.finished.connect(self.thread.quit)
             self.worker1.finished.connect(self.worker1.deleteLater)
             self.worker1.progress.connect(self.UpdateSteamGamesNumberInDb)
             self.thread.finished.connect(self.thread.deleteLater)
+            self.thread.start()
 
-        self.thread.start()
+        elif func == "FindOwnedSteamGames":
+            self.worker2 = Worker2(self.steam, main_window, steamid, directory)
+            self.worker2.setObjectName("owned_games")
+            self.worker2.moveToThread(self.thread)
+
+            self.worker2.progress.connect(main_window.UpdateDb)
+            self.worker2.progress.connect(main_window.AddGameToGUI_Owned)
+            self.thread.started.connect(self.worker2.FindOwnedSteamGamesInThread)
+            self.worker2.finished.connect(self.thread.quit)
+            self.worker2.wait()
+            self.worker2.finished.connect(self.worker2.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
+            self.thread.start()
 
 
 class Worker1(QThread):
@@ -192,10 +215,41 @@ class Worker1(QThread):
                         }
                     """
                 )
-                self.main_window.ui.tabWidget.setCurrentWidget(self.main_window.ui.All_games)
+                self.main_window.ui.tabWidget.setCurrentWidget(self.main_window.ui.Installed_games)
                 self.main_window.FetchInstalledGames(app_ids, app_names, 'steam')
                 self.finished.emit()
 
         except Exception:
             self.progress.emit(self.main_window, str, isError:=True)
             self.finished.emit()
+
+
+class Worker2(QThread):
+    finished = Signal()
+    progress = Signal(int, str, str, bytes)
+
+    def __init__(self, steam, main_window, steamid, parent=None):
+        super().__init__(parent)
+        self.steam = steam
+        self.main_window = main_window
+        self.steamid = steamid
+
+    def FindOwnedSteamGamesInThread(self):
+        try:
+            result = self.steam.users.get_owned_games(self.steamid)
+            self.main_window.ui.owned_games_quantity.setText(f"{result['game_count']} Games (Only Steam)")
+            for game in result["games"]:
+                img_icon_url = f"http://media.steampowered.com/steamcommunity/public/images/apps/{game['appid']}/{game['img_icon_url']}.jpg"
+                try:
+                    response = requests.get(img_icon_url, stream=True)
+                    image =  Image.open(response.raw)
+                    self.progress.emit(game["appid"], game["name"], 'steam',  image.tobytes())
+                except Exception:
+                    self.progress.emit(game["appid"], game["name"], 'steam', None)
+
+            self.main_window.ui.tabWidget.setCurrentWidget(self.main_window.ui.Owned_games)
+            self.finished.emit()
+
+        except Exception:
+            self.finished.emit()
+

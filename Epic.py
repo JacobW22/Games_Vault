@@ -121,7 +121,7 @@ class Worker1(QThread):
                     }
                 """
             )
-            self.main_window.ui.tabWidget.setCurrentWidget(self.main_window.ui.All_games)
+            self.main_window.ui.tabWidget.setCurrentWidget(self.main_window.ui.Installed_games)
             self.main_window.FetchInstalledGames(app_ids, app_names, 'epic')
             self.finished.emit()
 

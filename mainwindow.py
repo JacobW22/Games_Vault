@@ -11,9 +11,9 @@ from PIL.ImageQt import ImageQt
 from winotify import Notification
 from ctypes import wintypes
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QPushButton, QSystemTrayIcon, QMenu, QSizePolicy
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QPushButton, QSystemTrayIcon, QMenu, QSizePolicy, QHBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QCursor, QIcon, QAction
-from PySide6.QtCore import QThread, Signal, QRect, Qt
+from PySide6.QtCore import QThread, Signal, QRect, Qt, QSize
 
 from Steam import Steam
 from Epic import Epic
@@ -23,7 +23,6 @@ from layout.ui_form import Ui_MainWindow
 from layout.FlowLayout import FlowLayout
 from layout.RichTextPushButton import RichTextPushButton
 from layout.CircularAvatar import mask_image
-
 
 # Windows taskbar and task manager process name config
 myappid = u'GamesVault_v1.0'
@@ -46,6 +45,7 @@ class MainWindow(QMainWindow):
     container_id = 0
     games = None
     threads = []
+    installed_games_providers = []
 
 
     def __init__(self, parent=None):
@@ -55,7 +55,8 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.flow_layout_recent_games = FlowLayout(self.ui.Steam_recent_games)
-        self.flow_layout_installed_games = FlowLayout(self.ui.Steam_recent_games_8)
+        self.flow_layout_installed_games = FlowLayout(self.ui.Installed_games_content)
+        self.flow_layout_owned_games = FlowLayout(self.ui.Owned_games_content)
 
         self.change_steam_id = RichTextPushButton()
         self.change_steam_id.setFlat(True)
@@ -66,6 +67,24 @@ class MainWindow(QMainWindow):
         self.change_steam_id.setCursor(Qt.PointingHandCursor)
 
         self.ui.change_steam_id_container.layout().addWidget(self.change_steam_id)
+
+        self.ui.tabWidget.setStyleSheet("""
+            QTabBar::tab {
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+                padding: 5px;
+                margin: 5px;
+            }
+
+            QTabBar::tab:hover {
+                background: darkgray;
+            }
+
+            QTabBar::tab:selected {
+                background: rgba(0, 255, 0, 0);
+                color: rgb(0, 255, 0);
+            };
+        """)
 
 
         # System tray menu and app icon
@@ -101,20 +120,26 @@ class MainWindow(QMainWindow):
         self.ui.find_steam_directory.clicked.connect(lambda: self.Steam.FindSteamGames(self))
         self.change_steam_id.clicked.connect(lambda: self.Steam.ChangeSteamID(self))
 
-        self.ui.set_img_cover_width.sliderReleased.connect(self.UpdateImageCoverWidthInDatabase)
         self.ui.set_img_cover_width.valueChanged.connect(self.SetImageCoverWidth)
-        self.ui.search_games.textChanged.connect(self.SearchGameOnTextChanged)
+        self.ui.set_img_cover_width.sliderReleased.connect(lambda: self.UpdateImageCoverWidthInDatabase(self.ui.set_img_cover_width))
 
-        self.tray_icon.activated.connect(self.show_normal)
-        self.restore_action.triggered.connect(self.show_normal)
-        self.hide_action.triggered.connect(self.hide_application)
-        self.quit_action.triggered.connect(self.quit_application)
+        self.ui.set_img_cover_width_owned.valueChanged.connect(self.SetImageCoverWidth)
+        self.ui.set_img_cover_width_owned.sliderReleased.connect(lambda: self.UpdateImageCoverWidthInDatabase(self.ui.set_img_cover_width_owned))
+
+
+        self.ui.search_games.textChanged.connect(self.SearchGameOnTextChanged)
+        self.ui.search_games_owned.textChanged.connect(self.SearchGameOnTextChanged)
+
+        self.tray_icon.activated.connect(self.ShowNormal)
+        self.restore_action.triggered.connect(self.ShowNormal)
+        self.hide_action.triggered.connect(self.HideApplication)
+        self.quit_action.triggered.connect(self.QuitApplication)
         self.tray_icon.show()
 
 
         # Connect database
         self.database = Database()
-        self.check_db()
+        self.CheckDb()
 
 
     # System tray menu
@@ -123,7 +148,7 @@ class MainWindow(QMainWindow):
         self.hide()
 
 
-    def show_normal(self, reason):
+    def ShowNormal(self, reason):
         if reason == QSystemTrayIcon.Trigger or reason == False:
             self.show()
 
@@ -131,11 +156,11 @@ class MainWindow(QMainWindow):
             pass
 
 
-    def hide_application(self):
+    def HideApplication(self):
         self.hide()
 
 
-    def quit_application(self):
+    def QuitApplication(self):
         QApplication.instance().quit()
 
 
@@ -143,46 +168,87 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event):
         self.ui.search_widget_container.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
         self.ui.width_slider_container.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
+        self.ui.search_widget_container_2.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
+        self.ui.width_slider_container_2.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
+
+        try:
+            if self.ui.Owned_games_content.children()[1].objectName() == "info_label":
+                self.ui.Owned_games_content.children()[1].setMinimumHeight(self.ui.centralwidget.height()-125)
+        except Exception:
+            pass
 
 
     def SearchGameOnTextChanged(self, text):
-        for game in self.ui.Steam_recent_games_8.children()[1:]:
+        sender = self.sender().objectName()
+
+        if sender == "search_games":
+            games = self.ui.Installed_games_content.children()[1:]
+        elif sender == "search_games_owned":
+            games = self.ui.Owned_games_content.children()[1:]
+
+        for game in games:
             if text.lower() not in (game.objectName()).lower():
                 game.hide()
             else:
                 game.show()
 
 
-    def SetImageCoverWidth(self, value):
+    def SetImageCoverWidth(self, value, from_db=None):
         fit_width = value
-        self.ui.img_cover_width_info.setText(f'{value}px')
 
-        for game in self.ui.Steam_recent_games_8.children():
-            if game.children():
-                game.setProperty('minimumWidth', fit_width)
-                game.setProperty('maximumWidth', fit_width)
-                game.children()[0].setProperty('minimumWidth', fit_width)
-                game.children()[0].setProperty('maximumWidth', fit_width)
+        if self.sender() or from_db:
+            try:
+                sender = self.sender().objectName()
+            except Exception:
+                sender = None
 
-                game.children()[0].setProperty('minimumHeight', fit_width*1.5)
-                game.children()[0].setProperty('maximumHeight', fit_width*1.5)
-                game.setProperty('minimumHeight', fit_width*1.5)
-                game.setProperty('maximumHeight', fit_width*1.5)
+            if sender == "set_img_cover_width" or from_db == "set_img_cover_width":
+                games = self.ui.Installed_games_content.children()
+                self.ui.img_cover_width_info.setText(f'{value}px')
+
+                for game in games:
+                    if game.children():
+                        game.setProperty('minimumWidth', fit_width)
+                        game.setProperty('maximumWidth', fit_width)
+                        game.children()[0].setProperty('minimumWidth', fit_width)
+                        game.children()[0].setProperty('maximumWidth', fit_width)
+
+                        game.children()[0].setProperty('minimumHeight', fit_width*1.5)
+                        game.children()[0].setProperty('maximumHeight', fit_width*1.5)
+                        game.setProperty('minimumHeight', fit_width*1.5)
+                        game.setProperty('maximumHeight', fit_width*1.5)
 
 
-                game.children()[1].setProperty('geometry', QRect( 0, 0, game.children()[0].property('width'), game.children()[0].property('height')) )
-                game.children()[1].children()[0].setProperty('geometry', QRect( 0, 0, game.children()[0].property('width'), game.children()[0].property('height')) )
+                        game.children()[1].setProperty('geometry', QRect( 0, 0, game.children()[0].property('width'), game.children()[0].property('height')) )
+                        game.children()[1].children()[0].setProperty('geometry', QRect( 0, 0, game.children()[0].property('width'), game.children()[0].property('height')) )
 
-                font = game.children()[1].font()
-                font.setPointSize(fit_width/10)
-                game.children()[0].setFont(font)
-                game.children()[1].setFont(font)
+                        font = game.children()[1].font()
+                        font.setPointSize(fit_width/10)
+                        game.children()[0].setFont(font)
+                        game.children()[1].setFont(font)
+
+            elif sender == "set_img_cover_width_owned" or from_db == "set_img_cover_width_owned":
+                games = self.ui.Owned_games_content.children()
+                self.ui.img_cover_width_info_owned.setText(f'{value}px')
+
+                for game in games:
+                    if game.children():
+                        game.setProperty('minimumWidth', fit_width)
+                        game.setProperty('maximumWidth', fit_width)
+                        game.children()[1].setProperty('maximumWidth', fit_width)
 
 
-    def UpdateImageCoverWidthInDatabase(self):
+
+    def UpdateImageCoverWidthInDatabase(self, slider):
         if self.database.conn:
-            sql = "UPDATE user SET game_cover_img = ? WHERE id = 1;"
-            self.database.execute_query(self.database.conn, sql, [self.ui.set_img_cover_width.value()])
+            if slider.objectName() == "set_img_cover_width":
+                sql = "UPDATE user SET game_cover_img = ? WHERE id = 1;"
+                self.database.execute_query(self.database.conn, sql, [slider.value()])
+
+            elif slider.objectName() == "set_img_cover_width_owned":
+                sql = "UPDATE user SET owned_game_cover_img = ? WHERE id = 1;"
+                self.database.execute_query(self.database.conn, sql, [slider.value()])
+
 
 
     def UpdateRecentGamesGUI(self, game_icon_urls):
@@ -286,14 +352,6 @@ class MainWindow(QMainWindow):
             play_button = QPushButton(btn_label)
             fit_width = self.ui.set_img_cover_width.value()
 
-            if self.database.conn:
-                sql = "INSERT OR REPLACE INTO Installed_Games(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
-
-                if image:
-                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, image))
-                else:
-                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, image))
-
             if image:
                 q_image = QImage(image, 200, 500, QImage.Format.Format_RGB888)
                 pixmap = QPixmap.fromImage(q_image)
@@ -362,26 +420,77 @@ class MainWindow(QMainWindow):
             )
             play_button.clicked.connect(lambda: self.LaunchGame(launch_id, app_name, provider))
 
-            self.ui.Steam_recent_games_8.layout().addWidget(container)
-            self.ui.installed_games_quantity.setText(f'{len(self.ui.Steam_recent_games_8.children())-1} Games')
+            self.ui.Installed_games_content.layout().addWidget(container)
+
+            if provider.capitalize() not in self.installed_games_providers:
+                self.installed_games_providers.append(provider.capitalize())
+
+            providers_text = ' + '.join(self.installed_games_providers)
+
+            self.ui.installed_games_quantity.setText(f'{len(self.ui.Installed_games_content.children())-1} Games ({providers_text})')
 
         except Exception:
             pass
 
-    # Database check and launching games
-    def check_db(self):
+
+    def AddGameToGUI_Owned(self, launch_id, app_name, provider, image):
+        container = QWidget()
+        container.setLayout(QHBoxLayout())
+        label = QPushButton()
+        container.layout().addWidget(label)
+
+        if image:
+            q_image = QImage(image, 32, 32, QImage.Format.Format_RGB888)
+            pixmap = QPixmap.fromImage(q_image)
+            label.setIcon(QIcon(pixmap))
+            label.setIconSize(QSize(32,32))
+
+        font = label.font()
+        font.setPointSize(12)
+        label.setFont(font)
+
+        label.setText(f' {app_name}')
+        label.setToolTip(app_name)
+        container.setObjectName(f"{app_name.encode().decode('unicode-escape')}")
+
+        label.setStyleSheet(
+            """
+                QPushButton {
+                    text-align:left;
+                }
+                QPushButton:pressed {
+                    color: rgb(0, 255, 0);
+                }
+            """
+        )
+        label.clicked.connect(lambda: self.LaunchGame(launch_id, app_name, provider))
+        label.setMaximumWidth(200)
+        container.setMinimumWidth(200)
+        container.setMaximumWidth(200)
+        container.setMinimumHeight(50)
+        container.setMaximumHeight(label.height())
+        container.setStyleSheet("padding: 20px;")
+        label.setCursor(QCursor(Qt.PointingHandCursor))
+        self.ui.Owned_games_content.layout().addWidget(container)
+
+        self.ui.owned_games_quantity.setText(f'{len(self.ui.Owned_games_content.children())-1} Games (Only Steam)')
+
+
+
+    # Database operations
+    def CheckDb(self):
         if self.database.conn:
             sql_installed_games = "SELECT * FROM Installed_Games"
+            sql_owned_games = "SELECT * FROM Owned_Games"
             sql_user = "SELECT * FROM User WHERE id = 1"
 
-
             installed_games = self.database.execute_query(self.database.conn, sql_installed_games).fetchall()
+            owned_games = self.database.execute_query(self.database.conn, sql_owned_games).fetchall()
             user_info = self.database.execute_query(self.database.conn, sql_user).fetchone()
-
-
 
             steamid = user_info[1]
             img_cover_width = user_info[2]
+            img_cover_width_owned = user_info[3]
             installed_epic_games = user_info[-2]
             installed_steam_games = user_info[-1]
 
@@ -425,8 +534,52 @@ class MainWindow(QMainWindow):
                 self.Steam.FindSteamGames(self)
                 self.Epic.FindEpicGames_Games(self)
 
-            self.SetImageCoverWidth(img_cover_width)
+            if owned_games:
+                for game in owned_games:
+                    self.AddGameToGUI_Owned(*game[1:])
+            else:
+                if steamid != 0:
+                    try:
+                        self.ui.info_label.deleteLater()
+                    except Exception:
+                        pass
+                    self.Steam.RunInThread(self, steamid=steamid, func="FindOwnedSteamGames")
+                else:
+                    info_label = QLabel()
+                    info_label.setText("""Set your steam ID in the "Last Played" Tab""")
+                    info_label.setStyleSheet("color: rgb(0, 255, 0);")
+                    info_label.setAlignment(Qt.AlignCenter)
+                    info_label.setMinimumHeight(self.ui.centralwidget.height())
+                    info_label.setObjectName("info_label")
+                    font = info_label.font()
+                    font.setPointSize(14)
+                    info_label.setFont(font)
+                    self.ui.Owned_games_content.layout().addWidget(info_label)
+
+
             self.ui.set_img_cover_width.setValue(img_cover_width)
+            self.ui.set_img_cover_width_owned.setValue(img_cover_width_owned)
+            self.SetImageCoverWidth(img_cover_width, from_db="set_img_cover_width")
+            self.SetImageCoverWidth(img_cover_width_owned, from_db="set_img_cover_width_owned")
+
+
+
+    def UpdateDb(self, launch_id, app_name, provider, image):
+        sender = self.sender()
+        if sender:
+            if sender.objectName() == "installed_games":
+                table = "Installed_Games"
+            elif sender.objectName() == "owned_games":
+                table = "Owned_Games"
+
+            if self.database.conn:
+                if image:
+                    sql = f"INSERT OR REPLACE INTO {table}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
+                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, image))
+                else:
+                    sql = f"INSERT OR REPLACE INTO {table}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
+                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, None))
+
 
 
     def LaunchGame(self, launch_id, app_name, provider):
@@ -454,16 +607,20 @@ class MainWindow(QMainWindow):
             ).show()
 
 
+
     # Multi-threading
     def FetchInstalledGames(self, app_ids, app_names, provider):
         try:
             self.thread = QThread()
             self.worker = Worker(app_ids, app_names, provider)
+            self.worker.setObjectName("installed_games")
             self.worker.moveToThread(self.thread)
 
+            self.worker.progress.connect(self.UpdateDb)
             self.worker.progress.connect(self.AddGameToGUI)
             self.thread.started.connect(self.worker.FindGameCovers)
             self.worker.finished.connect(self.thread.quit)
+            self.worker.wait()
             self.worker.finished.connect(self.worker.deleteLater)
             self.thread.finished.connect(self.thread.deleteLater)
 
@@ -498,7 +655,6 @@ class Worker(QThread):
                 response = requests.get(url_and_appid[0], stream=True)
                 image =  Image.open(response.raw)
                 image = image.resize((200, 500))
-
                 self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, image.tobytes())
 
             except Exception:
