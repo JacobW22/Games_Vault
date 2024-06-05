@@ -13,7 +13,7 @@ from ctypes import wintypes
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QPushButton, QSystemTrayIcon, QMenu, QSizePolicy, QHBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QCursor, QIcon, QAction
-from PySide6.QtCore import QThread, Signal, QRect, Qt, QSize
+from PySide6.QtCore import QThread, Signal, QRect, Qt, QSize, QTimer
 
 from Steam import Steam
 from Epic import Epic
@@ -47,9 +47,11 @@ class MainWindow(QMainWindow):
     threads = []
     installed_games_providers = []
 
-
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        # Connect database
+        self.database = Database()
 
         # Initialize gui
         self.ui = Ui_MainWindow()
@@ -85,6 +87,21 @@ class MainWindow(QMainWindow):
                 color: rgb(0, 255, 0);
             };
         """)
+
+        if self.database.conn:
+            sql_user = "SELECT steam_id FROM User WHERE id = 1"
+            user_info = self.database.execute_query(self.database.conn, sql_user).fetchone()
+            steamid = user_info[0]
+
+            if steamid != 0:
+                self.timer_5min = QTimer()
+                self.timer_5min.timeout.connect(self.RefreshRecentGames)
+                self.timer_5min.start((5 * 60 * 1000)) # Refresh every 5 minutes
+
+
+        self.timer_1sec = QTimer()
+        self.timer_1sec.timeout.connect(self.UpdateRecentGamesRefreshTimer)
+        self.timer_1sec.start(1000)
 
 
         # System tray menu and app icon
@@ -136,9 +153,7 @@ class MainWindow(QMainWindow):
         self.quit_action.triggered.connect(self.QuitApplication)
         self.tray_icon.show()
 
-
-        # Connect database
-        self.database = Database()
+        # Run checks on database items
         self.CheckDb()
 
 
@@ -176,6 +191,22 @@ class MainWindow(QMainWindow):
                 self.ui.Owned_games_content.children()[1].setMinimumHeight(self.ui.centralwidget.height()-125)
         except Exception:
             pass
+
+
+    def UpdateRecentGamesRefreshTimer(self):
+        total_seconds = self.timer_5min.remainingTime() // 1000
+        minutes = int(self.timer_5min.remainingTime() // 60000)
+        seconds = total_seconds % 60
+
+        self.ui.recent_games_refresh_info.setText(f"Refresh in: {minutes}:{seconds}m")
+
+
+    def RefreshRecentGames(self):
+        if self.database.conn:
+            sql_user = "SELECT steam_id FROM User WHERE id = 1"
+            user_info = self.database.execute_query(self.database.conn, sql_user).fetchone()
+            steamid = user_info[0]
+            self.UpdateRecentGamesGUI(self.Steam.FetchRecentSteamGames(self, steamid))
 
 
     def SearchGameOnTextChanged(self, text):
@@ -344,7 +375,7 @@ class MainWindow(QMainWindow):
             self.ui.Steam_recent_games.update()
 
 
-    def AddGameToGUI(self, launch_id, app_name, provider, image):
+    def AddGameToGUI(self, launch_id, app_name, provider, image, *args):
         try:
             container = QWidget()
             label = QLabel(container)
@@ -433,7 +464,7 @@ class MainWindow(QMainWindow):
             pass
 
 
-    def AddGameToGUI_Owned(self, launch_id, app_name, provider, image):
+    def AddGameToGUI_Owned(self, launch_id, app_name, provider, image, *args):
         container = QWidget()
         container.setLayout(QHBoxLayout())
         label = QPushButton()
@@ -491,8 +522,9 @@ class MainWindow(QMainWindow):
             steamid = user_info[1]
             img_cover_width = user_info[2]
             img_cover_width_owned = user_info[3]
-            installed_epic_games = user_info[-2]
-            installed_steam_games = user_info[-1]
+            installed_epic_games = user_info[-3]
+            installed_steam_games = user_info[-2]
+            total_user_playtime_in_minutes = user_info[-1]
 
             if steamid != 0:
                 info = self.steam.users.get_user_details(steamid)["player"]
@@ -504,7 +536,7 @@ class MainWindow(QMainWindow):
                 pixmap = mask_image(q_image)
 
                 self.ui.user_avatar.setPixmap(pixmap)
-                self.UpdateRecentGamesGUI(self.Steam.FetchRecentSteamGames(steamid))
+                self.UpdateRecentGamesGUI(self.Steam.FetchRecentSteamGames(self, steamid))
 
 
             if installed_steam_games != 0:
@@ -526,6 +558,8 @@ class MainWindow(QMainWindow):
                         }
                     """
                 )
+            if total_user_playtime_in_minutes != 0:
+                self.ui.user_total_playtime.setText(f"Total playtime: {total_user_playtime_in_minutes//60}h {total_user_playtime_in_minutes%60}m")
 
             if installed_games:
                 for game in installed_games:
@@ -564,21 +598,14 @@ class MainWindow(QMainWindow):
 
 
 
-    def UpdateDb(self, launch_id, app_name, provider, image):
-        sender = self.sender()
-        if sender:
-            if sender.objectName() == "installed_games":
-                table = "Installed_Games"
-            elif sender.objectName() == "owned_games":
-                table = "Owned_Games"
-
-            if self.database.conn:
-                if image:
-                    sql = f"INSERT OR REPLACE INTO {table}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
-                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, image))
-                else:
-                    sql = f"INSERT OR REPLACE INTO {table}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
-                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, None))
+    def UpdateDb(self, launch_id, app_name, provider, image, db_destination):
+        if self.database.conn:
+            if image:
+                sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
+                self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, image))
+            else:
+                sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
+                self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, None))
 
 
 
@@ -620,7 +647,6 @@ class MainWindow(QMainWindow):
             self.worker.progress.connect(self.AddGameToGUI)
             self.thread.started.connect(self.worker.FindGameCovers)
             self.worker.finished.connect(self.thread.quit)
-            self.worker.wait()
             self.worker.finished.connect(self.worker.deleteLater)
             self.thread.finished.connect(self.thread.deleteLater)
 
@@ -633,7 +659,7 @@ class MainWindow(QMainWindow):
 
 class Worker(QThread):
     finished = Signal()
-    progress = Signal(str, str, str, bytes)
+    progress = Signal(str, str, str, bytes, str)
 
     def __init__(self, app_ids, app_names, provider, parent=None):
         super().__init__(parent)
@@ -655,10 +681,10 @@ class Worker(QThread):
                 response = requests.get(url_and_appid[0], stream=True)
                 image =  Image.open(response.raw)
                 image = image.resize((200, 500))
-                self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, image.tobytes())
+                self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, image.tobytes(), "Installed_Games")
 
             except Exception:
-                self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, None)
+                self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, None, "Installed_Games")
 
         self.finished.emit()
 

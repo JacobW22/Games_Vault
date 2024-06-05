@@ -15,7 +15,6 @@ class Database:
         conn = None
         try:
             conn = sqlite3.connect(db_file)
-            print(f"SQLite database connected. SQLite version: {sqlite3.version}")
         except Error as e:
             print(e)
         return conn
@@ -48,12 +47,13 @@ class Database:
             owned_game_cover_img INTEGER,
             first_time_visit BOOLEAN NOT NULL,
             installed_games_from_epic INTEGER,
-            installed_games_from_steam INTEGER
+            installed_games_from_steam INTEGER,
+            total_user_playtime_in_minutes INTEGER
         );
         """
 
         sql_insert_into_user_table = """
-        INSERT INTO User VALUES (NULL, 0, 140, 200, TRUE, 0, 0);
+        INSERT INTO User VALUES (NULL, 0, 140, 200, TRUE, 0, 0, 0);
         """
 
         sql_create_installed_games_table  = """

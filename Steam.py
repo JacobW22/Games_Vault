@@ -61,9 +61,23 @@ class Steam:
                 self.RunInThread(main_window, func="FindSteamGames", directory=directory)
 
 
-    def FetchRecentSteamGames(self, steamid):
+    def FetchRecentSteamGames(self, main_window, steamid):
         player_info = self.steam.users.get_user_recently_played_games(steamid)
         game_icon_urls = []
+
+        try:
+            if len(main_window.ui.Steam_recent_games.children()) > 1:
+                for game in main_window.ui.Steam_recent_games.children()[1:]:
+                    game.deleteLater()
+
+
+            context_menu_items = ["Open", "Hide", "Quit"]
+
+            for action in main_window.tray_menu.actions():
+                if action.text() not in context_menu_items:
+                    action.deleteLater()
+        except Exception:
+            pass
 
         for game in player_info["games"]:
             try:
@@ -102,23 +116,18 @@ class Steam:
 
                 main_window.ui.user_avatar.setPixmap(pixmap)
 
-                if len(main_window.ui.Steam_recent_games.children()) > 1:
-                    for game in main_window.ui.Steam_recent_games.children()[1:]:
-                        game.deleteLater()
-
-
-                context_menu_items = ["Open", "Hide", "Quit"]
-
-                for action in main_window.tray_menu.actions():
-                    if action.text() not in context_menu_items:
-                        action.deleteLater()
-
-                main_window.UpdateRecentGamesGUI(self.FetchRecentSteamGames(steamid))
+                main_window.UpdateRecentGamesGUI(self.FetchRecentSteamGames(main_window, steamid))
                 try:
                     if main_window.ui.Owned_games_content.children()[1].objectName() == "info_label":
                         main_window.ui.Owned_games_content.children()[1].deleteLater()
                 except Exception:
                     pass
+
+                if main_window.database.conn:
+                    sql = "DELETE FROM Owned_Games;"
+                    main_window.database.execute_query(main_window.database.conn, sql)
+
+
                 self.RunInThread(main_window, "FindOwnedSteamGames", steamid=steamid)
 
                 if main_window.database.conn:
@@ -147,6 +156,17 @@ class Steam:
             self.FindSteamGames(main_window, directory=None)
 
 
+    def UpdateTotalUserPlaytimeInDb(self, main_window, total_user_playtime):
+        if main_window.database.conn:
+            sql = "UPDATE User SET total_user_playtime_in_minutes = ? WHERE id = 1"
+            main_window.database.execute_query(main_window.database.conn, sql, [total_user_playtime])
+
+        self.worker2.finished.connect(self.thread.quit)
+        self.worker2.wait()
+        self.worker2.finished.connect(self.worker2.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+
+
     # Multi-threading
     def RunInThread(self, main_window, func, steamid=None,  directory=None):
         self.thread = QThread()
@@ -171,10 +191,7 @@ class Steam:
             self.worker2.progress.connect(main_window.UpdateDb)
             self.worker2.progress.connect(main_window.AddGameToGUI_Owned)
             self.thread.started.connect(self.worker2.FindOwnedSteamGamesInThread)
-            self.worker2.finished.connect(self.thread.quit)
-            self.worker2.wait()
-            self.worker2.finished.connect(self.worker2.deleteLater)
-            self.thread.finished.connect(self.thread.deleteLater)
+            self.worker2.finished.connect(self.UpdateTotalUserPlaytimeInDb)
             self.thread.start()
 
 
@@ -225,8 +242,8 @@ class Worker1(QThread):
 
 
 class Worker2(QThread):
-    finished = Signal()
-    progress = Signal(int, str, str, bytes)
+    finished = Signal(object, int)
+    progress = Signal(int, str, str, bytes, str)
 
     def __init__(self, steam, main_window, steamid, parent=None):
         super().__init__(parent)
@@ -238,18 +255,31 @@ class Worker2(QThread):
         try:
             result = self.steam.users.get_owned_games(self.steamid)
             self.main_window.ui.owned_games_quantity.setText(f"{result['game_count']} Games (Only Steam)")
+            self.main_window.ui.tabWidget.setCurrentWidget(self.main_window.ui.Owned_games)
+
+            for gui_item in self.main_window.ui.Owned_games_content.children()[1:]:
+                gui_item.deleteLater()
+
+            total_user_playtime = 0
             for game in result["games"]:
                 img_icon_url = f"http://media.steampowered.com/steamcommunity/public/images/apps/{game['appid']}/{game['img_icon_url']}.jpg"
                 try:
+                    try:
+                        total_user_playtime += (game["playtime_windows_forever"] + game["playtime_mac_forever"] + game["playtime_linux_forever"])
+                    except Exception:
+                        total_user_playtime += (game["playtime_forever"])
+
+                    self.main_window.ui.user_total_playtime.setText(f"Total playtime: {total_user_playtime//60}h {total_user_playtime%60}m")
                     response = requests.get(img_icon_url, stream=True)
                     image =  Image.open(response.raw)
-                    self.progress.emit(game["appid"], game["name"], 'steam',  image.tobytes())
-                except Exception:
-                    self.progress.emit(game["appid"], game["name"], 'steam', None)
+                    self.progress.emit(game["appid"], game["name"], 'steam',  image.tobytes(), "Owned_Games")
+                except Exception as e:
+                    print(e)
+                    self.progress.emit(game["appid"], game["name"], 'steam', None, "Owned_Games")
 
-            self.main_window.ui.tabWidget.setCurrentWidget(self.main_window.ui.Owned_games)
-            self.finished.emit()
+            self.finished.emit(self.main_window, total_user_playtime)
 
-        except Exception:
-            self.finished.emit()
+        except Exception as e:
+            print(e)
+            self.finished.emit(self.main_window, total_user_playtime)
 
