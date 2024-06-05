@@ -243,7 +243,7 @@ class Worker1(QThread):
 
 class Worker2(QThread):
     finished = Signal(object, int)
-    progress = Signal(int, str, str, bytes, str)
+    progress = Signal(int, str, str, bytes, int, str)
 
     def __init__(self, steam, main_window, steamid, parent=None):
         super().__init__(parent)
@@ -265,17 +265,19 @@ class Worker2(QThread):
                 img_icon_url = f"http://media.steampowered.com/steamcommunity/public/images/apps/{game['appid']}/{game['img_icon_url']}.jpg"
                 try:
                     try:
+                        playtime = (game["playtime_windows_forever"] + game["playtime_mac_forever"] + game["playtime_linux_forever"])
                         total_user_playtime += (game["playtime_windows_forever"] + game["playtime_mac_forever"] + game["playtime_linux_forever"])
                     except Exception:
+                        playtime = (game["playtime_forever"])
                         total_user_playtime += (game["playtime_forever"])
 
                     self.main_window.ui.user_total_playtime.setText(f"Total playtime: {total_user_playtime//60}h {total_user_playtime%60}m")
                     response = requests.get(img_icon_url, stream=True)
                     image =  Image.open(response.raw)
-                    self.progress.emit(game["appid"], game["name"], 'steam',  image.tobytes(), "Owned_Games")
+                    self.progress.emit(game["appid"], game["name"], 'steam',  image.tobytes(), playtime, "Owned_Games")
                 except Exception as e:
                     print(e)
-                    self.progress.emit(game["appid"], game["name"], 'steam', None, "Owned_Games")
+                    self.progress.emit(game["appid"], game["name"], 'steam', None, playtime, "Owned_Games")
 
             self.finished.emit(self.main_window, total_user_playtime)
 

@@ -98,10 +98,9 @@ class MainWindow(QMainWindow):
                 self.timer_5min.timeout.connect(self.RefreshRecentGames)
                 self.timer_5min.start((5 * 60 * 1000)) # Refresh every 5 minutes
 
-
-        self.timer_1sec = QTimer()
-        self.timer_1sec.timeout.connect(self.UpdateRecentGamesRefreshTimer)
-        self.timer_1sec.start(1000)
+                self.timer_1sec = QTimer()
+                self.timer_1sec.timeout.connect(self.UpdateRecentGamesRefreshTimer)
+                self.timer_1sec.start(1000)
 
 
         # System tray menu and app icon
@@ -464,7 +463,7 @@ class MainWindow(QMainWindow):
             pass
 
 
-    def AddGameToGUI_Owned(self, launch_id, app_name, provider, image, *args):
+    def AddGameToGUI_Owned(self, launch_id, app_name, provider, image, playtime, *args):
         container = QWidget()
         container.setLayout(QHBoxLayout())
         label = QPushButton()
@@ -480,7 +479,9 @@ class MainWindow(QMainWindow):
         font.setPointSize(12)
         label.setFont(font)
 
-        label.setText(f' {app_name}')
+        if playtime == None:
+            playtime = 0
+        label.setText(f" {app_name}\n 🕑{playtime//60}h")
         label.setToolTip(app_name)
         container.setObjectName(f"{app_name.encode().decode('unicode-escape')}")
 
@@ -512,7 +513,7 @@ class MainWindow(QMainWindow):
     def CheckDb(self):
         if self.database.conn:
             sql_installed_games = "SELECT * FROM Installed_Games"
-            sql_owned_games = "SELECT * FROM Owned_Games"
+            sql_owned_games = "SELECT launch_id, app_name, provider, image, playtime FROM Owned_Games"
             sql_user = "SELECT * FROM User WHERE id = 1"
 
             installed_games = self.database.execute_query(self.database.conn, sql_installed_games).fetchall()
@@ -570,7 +571,7 @@ class MainWindow(QMainWindow):
 
             if owned_games:
                 for game in owned_games:
-                    self.AddGameToGUI_Owned(*game[1:])
+                    self.AddGameToGUI_Owned(*game)
             else:
                 if steamid != 0:
                     try:
@@ -598,14 +599,22 @@ class MainWindow(QMainWindow):
 
 
 
-    def UpdateDb(self, launch_id, app_name, provider, image, db_destination):
+    def UpdateDb(self, launch_id, app_name, provider, image, playtime, db_destination):
         if self.database.conn:
             if image:
-                sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
-                self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, image))
+                if playtime:
+                    sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image, playtime) VALUES(?,?,?,?,?,?)"
+                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, image, playtime))
+                else:
+                    sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
+                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, image))
             else:
-                sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
-                self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, None))
+                if playtime:
+                    sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image, playtime) VALUES(?,?,?,?,?,?)"
+                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, None, playtime))
+                else:
+                    sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
+                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, None))
 
 
 
@@ -659,7 +668,7 @@ class MainWindow(QMainWindow):
 
 class Worker(QThread):
     finished = Signal()
-    progress = Signal(str, str, str, bytes, str)
+    progress = Signal(str, str, str, bytes, int, str)
 
     def __init__(self, app_ids, app_names, provider, parent=None):
         super().__init__(parent)
@@ -681,10 +690,10 @@ class Worker(QThread):
                 response = requests.get(url_and_appid[0], stream=True)
                 image =  Image.open(response.raw)
                 image = image.resize((200, 500))
-                self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, image.tobytes(), "Installed_Games")
+                self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, image.tobytes(), None, "Installed_Games")
 
             except Exception:
-                self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, None, "Installed_Games")
+                self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, None, None, "Installed_Games")
 
         self.finished.emit()
 

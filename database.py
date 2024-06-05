@@ -75,6 +75,7 @@ class Database:
             app_name TEXT NOT NULL,
             provider TEXT NOT NULL,
             image BLOB,
+            playtime INTEGER,
 
             FOREIGN KEY(user_id) REFERENCES User(id)
         );
