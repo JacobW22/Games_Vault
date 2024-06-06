@@ -10,11 +10,14 @@
         "layout/CircularAvatar.py",
         "layout/ErrorMessage.py",
         "layout/FlowLayout.py",
-        "layout/form.ui",
         "layout/InputDialog.py",
         "layout/MessageBox.py",
         "layout/RichTextPushButton.py",
         "layout/ui_form.py",
-        "layout/__init__.py"
+        "layout/__init__.py",
+        "layout/form.ui",
+        "desktop_widget.py",
+        "layout/desktop_widget_form.ui",
+        "layout/desktop_widget_form.py"
     ]
 }

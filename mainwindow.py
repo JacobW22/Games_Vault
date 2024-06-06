@@ -23,6 +23,7 @@ from layout.ui_form import Ui_MainWindow
 from layout.FlowLayout import FlowLayout
 from layout.RichTextPushButton import RichTextPushButton
 from layout.CircularAvatar import mask_image
+from desktop_widget import DesktopWidget
 
 # Windows taskbar and task manager process name config
 myappid = u'GamesVault_v1.0'
@@ -88,6 +89,12 @@ class MainWindow(QMainWindow):
             };
         """)
 
+        # Desktop Widget
+        # self.desktop_widget = DesktopWidget()
+        # self.desktop_widget.show()
+        # self.ui.installed_games_quantity.hide()
+        # self.desktop_widget.ui.centralwidget.layout().addWidget(self.ui.installed_games_container)
+
         if self.database.conn:
             sql_user = "SELECT steam_id FROM User WHERE id = 1"
             user_info = self.database.execute_query(self.database.conn, sql_user).fetchone()
@@ -135,6 +142,7 @@ class MainWindow(QMainWindow):
         self.ui.find_epic_games_directory.clicked.connect(lambda: self.Epic.FindEpicGames_Games(self))
         self.ui.find_steam_directory.clicked.connect(lambda: self.Steam.FindSteamGames(self))
         self.change_steam_id.clicked.connect(lambda: self.Steam.ChangeSteamID(self))
+        self.ui.user_total_playtime.mousePressEvent = self.ChangeUserTotalPlaytimeDisplayMode
 
         self.ui.set_img_cover_width.valueChanged.connect(self.SetImageCoverWidth)
         self.ui.set_img_cover_width.sliderReleased.connect(lambda: self.UpdateImageCoverWidthInDatabase(self.ui.set_img_cover_width))
@@ -206,6 +214,24 @@ class MainWindow(QMainWindow):
             user_info = self.database.execute_query(self.database.conn, sql_user).fetchone()
             steamid = user_info[0]
             self.UpdateRecentGamesGUI(self.Steam.FetchRecentSteamGames(self, steamid))
+
+    def ChangeUserTotalPlaytimeDisplayMode(self, event):
+        if self.database.conn:
+            try:
+                query = "SELECT total_user_playtime_in_minutes FROM User WHERE id = 1"
+                result = self.database.execute_query(self.database.conn, query).fetchone()
+                total_user_playtime_in_minutes = result[0]
+                display_modes = [(f"Total playtime: {total_user_playtime_in_minutes//60}h {total_user_playtime_in_minutes%60}m"), (f"Total playtime: {total_user_playtime_in_minutes//1440} days")]
+
+                i = 0
+
+                while self.ui.user_total_playtime.text() == display_modes[i]:
+                    i += 1
+
+                self.ui.user_total_playtime.setText(display_modes[i])
+            except Exception as e:
+                print(e)
+
 
 
     def SearchGameOnTextChanged(self, text):
@@ -561,6 +587,7 @@ class MainWindow(QMainWindow):
                 )
             if total_user_playtime_in_minutes != 0:
                 self.ui.user_total_playtime.setText(f"Total playtime: {total_user_playtime_in_minutes//60}h {total_user_playtime_in_minutes%60}m")
+                self.ui.user_total_playtime.setCursor(Qt.PointingHandCursor)
 
             if installed_games:
                 for game in installed_games:

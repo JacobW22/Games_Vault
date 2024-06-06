@@ -9,7 +9,7 @@ from PIL.ImageQt import ImageQt
 
 from PySide6.QtWidgets import QFileDialog
 from PySide6.QtGui import QImage
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import QThread, Signal, Qt
 
 from layout.MessageBox import MessageBox
 from layout.ErrorMessage import ErrorMessage
@@ -215,6 +215,8 @@ class Worker1(QThread):
                 app_ids = [key for sub_dict in libraries.values() for key in sub_dict]
                 app_names = []
 
+                self.main_window.ui.steam_dir_info.setText("⌛ Working...")
+                self.main_window.ui.steam_dir_info.setStyleSheet("color: rgb(0, 255, 255);")
                 for appid in app_ids:
                     game = self.steam.apps.search_games(appid)
 
@@ -272,6 +274,7 @@ class Worker2(QThread):
                         total_user_playtime += (game["playtime_forever"])
 
                     self.main_window.ui.user_total_playtime.setText(f"Total playtime: {total_user_playtime//60}h {total_user_playtime%60}m")
+                    self.main_window.ui.user_total_playtime.setCursor(Qt.PointingHandCursor)
                     response = requests.get(img_icon_url, stream=True)
                     image =  Image.open(response.raw)
                     self.progress.emit(game["appid"], game["name"], 'steam',  image.tobytes(), playtime, "Owned_Games")
