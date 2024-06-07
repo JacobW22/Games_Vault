@@ -22,7 +22,15 @@ class Ui_DekstopWidget(object):
     def setupUi(self, DekstopWidget):
         if not DekstopWidget.objectName():
             DekstopWidget.setObjectName(u"DekstopWidget")
-        DekstopWidget.resize(800, 600)
+        DekstopWidget.resize(400, 600)
+        palette = QPalette()
+        brush = QBrush(QColor(0, 0, 0, 255))
+        brush.setStyle(Qt.SolidPattern)
+        palette.setBrush(QPalette.Active, QPalette.Window, brush)
+        palette.setBrush(QPalette.Inactive, QPalette.Window, brush)
+        palette.setBrush(QPalette.Disabled, QPalette.Base, brush)
+        palette.setBrush(QPalette.Disabled, QPalette.Window, brush)
+        DekstopWidget.setPalette(palette)
         DekstopWidget.setWindowOpacity(0.950000000000000)
         self.centralwidget = QWidget(DekstopWidget)
         self.centralwidget.setObjectName(u"centralwidget")

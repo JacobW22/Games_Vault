@@ -13,7 +13,7 @@ from ctypes import wintypes
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QPushButton, QSystemTrayIcon, QMenu, QSizePolicy, QHBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QCursor, QIcon, QAction
-from PySide6.QtCore import QThread, Signal, QRect, Qt, QSize, QTimer
+from PySide6.QtCore import QThread, Signal, QRect, Qt, QSize, QTimer, QPointF
 
 from Steam import Steam
 from Epic import Epic
@@ -54,6 +54,7 @@ class MainWindow(QMainWindow):
         # Connect database
         self.database = Database()
 
+
         # Initialize gui
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -89,26 +90,6 @@ class MainWindow(QMainWindow):
             };
         """)
 
-        # Desktop Widget
-        # self.desktop_widget = DesktopWidget()
-        # self.desktop_widget.show()
-        # self.ui.installed_games_quantity.hide()
-        # self.desktop_widget.ui.centralwidget.layout().addWidget(self.ui.installed_games_container)
-
-        if self.database.conn:
-            sql_user = "SELECT steam_id FROM User WHERE id = 1"
-            user_info = self.database.execute_query(self.database.conn, sql_user).fetchone()
-            steamid = user_info[0]
-
-            if steamid != 0:
-                self.timer_5min = QTimer()
-                self.timer_5min.timeout.connect(self.RefreshRecentGames)
-                self.timer_5min.start((5 * 60 * 1000)) # Refresh every 5 minutes
-
-                self.timer_1sec = QTimer()
-                self.timer_1sec.timeout.connect(self.UpdateRecentGamesRefreshTimer)
-                self.timer_1sec.start(1000)
-
 
         # System tray menu and app icon
         self.tray_icon = QSystemTrayIcon()
@@ -141,6 +122,8 @@ class MainWindow(QMainWindow):
         # Initialize buttons and actions
         self.ui.find_epic_games_directory.clicked.connect(lambda: self.Epic.FindEpicGames_Games(self))
         self.ui.find_steam_directory.clicked.connect(lambda: self.Steam.FindSteamGames(self))
+        self.ui.open_widget.clicked.connect(self.OpenWidget)
+        self.ui.launch_widget_on_start.clicked.connect(self.UpdateSettings)
         self.change_steam_id.clicked.connect(lambda: self.Steam.ChangeSteamID(self))
         self.ui.user_total_playtime.mousePressEvent = self.ChangeUserTotalPlaytimeDisplayMode
 
@@ -189,8 +172,8 @@ class MainWindow(QMainWindow):
     # GUI
     def resizeEvent(self, event):
         self.ui.search_widget_container.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
-        self.ui.width_slider_container.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
         self.ui.search_widget_container_2.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
+        self.ui.width_slider_container.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
         self.ui.width_slider_container_2.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
 
         try:
@@ -198,6 +181,67 @@ class MainWindow(QMainWindow):
                 self.ui.Owned_games_content.children()[1].setMinimumHeight(self.ui.centralwidget.height()-125)
         except Exception:
             pass
+
+
+    def OpenWidget(self):
+        self.desktop_widget = DesktopWidget()
+        self.desktop_widget.show()
+
+        if self.database.conn:
+            query = "SELECT widget_last_pos_x, widget_last_pos_y, widget_last_width, widget_last_height FROM User WHERE id = 1"
+            result = self.database.execute_query(self.database.conn, query).fetchall()
+            pos_x, pos_y, width, height = result[0][0], result[0][1], result[0][2], result[0][3]
+            self.desktop_widget.move(pos_x, pos_y)
+            self.desktop_widget.resize(width, height)
+
+        self.installed_games_container = self.ui.installed_games_container
+
+        self.ui.open_widget.hide()
+        self.ui.installed_games_quantity.hide()
+        self.desktop_widget.ui.centralwidget.layout().addWidget(self.installed_games_container)
+
+        self.close_widget_btn_container = QWidget()
+        self.close_widget_btn_container.setLayout(QHBoxLayout())
+
+        close_widget_btn = QPushButton()
+        close_widget_btn.setText("Close Active Widget")
+        close_widget_btn.setMaximumWidth(250)
+        close_widget_btn.setStyleSheet("""
+            QPushButton {
+                font-size: 20px; padding: 15px;
+            }
+            QPushButton:hover {
+                color: rgb(0, 255,0);
+            }
+        """)
+        close_widget_btn.setCursor(Qt.PointingHandCursor)
+
+        close_widget_btn.clicked.connect(self.CloseWidget)
+        self.desktop_widget.window_closed.connect(self.SaveWidgetInfo)
+        self.desktop_widget.window_closed.connect(self.CloseWidget)
+        self.close_widget_btn_container.layout().addWidget(close_widget_btn)
+        self.ui.scrollAreaWidgetContents_2.layout().addWidget(self.close_widget_btn_container)
+
+
+
+    def CloseWidget(self):
+        self.close_widget_btn_container.deleteLater()
+        self.ui.installed_games_quantity.show()
+        self.ui.open_widget.show()
+        self.ui.scrollAreaWidgetContents_2.layout().addWidget(self.installed_games_container)
+        self.desktop_widget.close()
+
+
+
+    def StartRefreshTimers(self):
+        self.timer_5min = QTimer()
+        self.timer_5min.timeout.connect(self.RefreshRecentGames)
+        self.timer_5min.start((5 * 60 * 1000)) # Refresh every 5 minutes
+
+        self.timer_1sec = QTimer()
+        self.timer_1sec.timeout.connect(self.UpdateRecentGamesRefreshTimer)
+        self.timer_1sec.start(1000)
+
 
 
     def UpdateRecentGamesRefreshTimer(self):
@@ -208,12 +252,15 @@ class MainWindow(QMainWindow):
         self.ui.recent_games_refresh_info.setText(f"Refresh in: {minutes}:{seconds}m")
 
 
+
     def RefreshRecentGames(self):
         if self.database.conn:
             sql_user = "SELECT steam_id FROM User WHERE id = 1"
             user_info = self.database.execute_query(self.database.conn, sql_user).fetchone()
             steamid = user_info[0]
             self.UpdateRecentGamesGUI(self.Steam.FetchRecentSteamGames(self, steamid))
+
+
 
     def ChangeUserTotalPlaytimeDisplayMode(self, event):
         if self.database.conn:
@@ -547,11 +594,13 @@ class MainWindow(QMainWindow):
             user_info = self.database.execute_query(self.database.conn, sql_user).fetchone()
 
             steamid = user_info[1]
-            img_cover_width = user_info[2]
-            img_cover_width_owned = user_info[3]
+            open_widget_on_start = user_info[2]
+            img_cover_width = user_info[-5]
+            img_cover_width_owned = user_info[-4]
             installed_epic_games = user_info[-3]
             installed_steam_games = user_info[-2]
             total_user_playtime_in_minutes = user_info[-1]
+
 
             if steamid != 0:
                 info = self.steam.users.get_user_details(steamid)["player"]
@@ -563,7 +612,14 @@ class MainWindow(QMainWindow):
                 pixmap = mask_image(q_image)
 
                 self.ui.user_avatar.setPixmap(pixmap)
+                self.StartRefreshTimers()
                 self.UpdateRecentGamesGUI(self.Steam.FetchRecentSteamGames(self, steamid))
+
+
+            if open_widget_on_start == True:
+                self.ui.launch_widget_on_start.setText("On")
+                self.ui.launch_widget_on_start.setStyleSheet("color: rgb(0, 255, 0);")
+                self.OpenWidget()
 
 
             if installed_steam_games != 0:
@@ -642,6 +698,29 @@ class MainWindow(QMainWindow):
                 else:
                     sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
                     self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, None))
+
+
+
+    def UpdateSettings(self):
+        if self.database.conn:
+            query = "UPDATE user SET open_widget_on_start = ? WHERE id = 1;"
+            if self.sender().text() == "Off":
+                self.sender().setText("On")
+                self.sender().setStyleSheet("color: rgb(0, 255, 0);")
+                self.database.execute_query(self.database.conn, query, [True])
+            else:
+                self.sender().setText("Off")
+                self.sender().setStyleSheet("color: rgb(255, 0, 0);")
+                self.database.execute_query(self.database.conn, query, [False])
+
+
+
+    def SaveWidgetInfo(self):
+        if self.database.conn:
+            query = "UPDATE user SET widget_last_pos_x = ?, widget_last_pos_y = ?, widget_last_width = ?, widget_last_height = ? WHERE id = 1;"
+            widget_pos = self.desktop_widget.pos()
+            widget_pos_float = QPointF(widget_pos)
+            self.database.execute_query(self.database.conn, query, [widget_pos_float.x(), widget_pos_float.y(), self.desktop_widget.width(), self.desktop_widget.height()])
 
 
 

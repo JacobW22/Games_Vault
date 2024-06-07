@@ -117,6 +117,8 @@ class Steam:
                 main_window.ui.user_avatar.setPixmap(pixmap)
 
                 main_window.UpdateRecentGamesGUI(self.FetchRecentSteamGames(main_window, steamid))
+                main_window.StartRefreshTimers()
+
                 try:
                     if main_window.ui.Owned_games_content.children()[1].objectName() == "info_label":
                         main_window.ui.Owned_games_content.children()[1].deleteLater()

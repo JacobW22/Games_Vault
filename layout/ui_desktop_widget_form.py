@@ -22,7 +22,7 @@ class Ui_DekstopWidget(object):
     def setupUi(self, DekstopWidget):
         if not DekstopWidget.objectName():
             DekstopWidget.setObjectName(u"DekstopWidget")
-        DekstopWidget.resize(800, 600)
+        DekstopWidget.resize(400, 600)
         palette = QPalette()
         brush = QBrush(QColor(0, 0, 0, 255))
         brush.setStyle(Qt.SolidPattern)
