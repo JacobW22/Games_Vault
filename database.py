@@ -1,5 +1,10 @@
 import sqlite3
 from sqlite3 import Error
+from Logging import LoggingSetup
+
+# Initialize the logger
+logger = LoggingSetup.setup_logging()
+
 
 class Database:
 
@@ -10,18 +15,21 @@ class Database:
         if self.conn:
             self.initialize_database()
 
+
     def create_connection(self, db_file):
         """ Create a database connection to the SQLite database specified by db_file """
         conn = None
         try:
             conn = sqlite3.connect(db_file)
         except Error as e:
-            print(e)
+            logger.error(f"create_connection: {e}")
+
         return conn
 
 
+
     def execute_query(self, conn, create_table_sql, values=None):
-        """ Create a table from the create_table_sql statement """
+        """ Create a table """
         try:
             c = conn.cursor()
             if values:
@@ -33,7 +41,8 @@ class Database:
             return c
 
         except Error as e:
-            print(e)
+            logger.error(f"execute_query: {e}")
+
 
 
     def initialize_database(self):

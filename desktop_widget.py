@@ -12,7 +12,6 @@ class DesktopWidget(QMainWindow):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # Set up the UI
         self.ui = Ui_DekstopWidget()
         self.ui.setupUi(self)
         self.move(15, 15)
@@ -30,15 +29,15 @@ class DesktopWidget(QMainWindow):
         self.resizeable = False
         self.offset = None
 
-        # Get all windows
-        windows = gw.getAllWindows()
 
         # Minimize all windows except the current one
+        windows = gw.getAllWindows()
         current_window = gw.getActiveWindow()._hWnd
         for window in windows:
             if window._hWnd != current_window:
                 window = gw.Win32Window(window._hWnd)
                 window.minimize()
+
 
 
     def mousePressEvent(self, event):
@@ -52,6 +51,7 @@ class DesktopWidget(QMainWindow):
                     self.draggable = False
 
 
+
     def mouseMoveEvent(self, event):
         if self.draggable:
             self.move(self.pos() + event.pos() - self.offset)
@@ -60,9 +60,11 @@ class DesktopWidget(QMainWindow):
             self.resize(max(100, event.pos().x()), max(100, event.pos().y()))
 
 
+
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.draggable = False
+
 
 
     def closeEvent(self, event):

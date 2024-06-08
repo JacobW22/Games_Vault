@@ -18,6 +18,7 @@
         "layout/form.ui",
         "desktop_widget.py",
         "layout/desktop_widget_form.ui",
-        "layout/desktop_widget_form.py"
+        "layout/desktop_widget_form.py",
+        "Logging.py"
     ]
 }

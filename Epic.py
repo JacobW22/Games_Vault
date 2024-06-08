@@ -4,8 +4,11 @@ import json
 import configparser
 
 from steam_web_api import Steam
+
 from PySide6.QtWidgets import QFileDialog
 from PySide6.QtCore import QThread, Signal, QObject
+
+from Logging import LoggingSetup
 
 from layout.MessageBox import MessageBox
 from layout.ErrorMessage import ErrorMessage
@@ -15,6 +18,10 @@ from layout.ErrorMessage import ErrorMessage
 config = configparser.ConfigParser()
 config.read('config.ini')
 STEAM_API_KEY = config['API_KEYS']['STEAM_API_KEY']
+
+
+# Initialize the logger
+logger = LoggingSetup.setup_logging()
 
 
 class Epic(QObject):
@@ -35,7 +42,7 @@ class Epic(QObject):
                 raise Exception
             self.RunInThread(main_window, directory, func="FindEpicGames")
 
-        except Exception:
+        except Exception as e:
             error_msg = ErrorMessage("Can't Find Epic Games Program Data Folder")
             error_msg.exec()
 
@@ -65,6 +72,8 @@ class Epic(QObject):
                 self.FindEpicGames(main_window, f"{directory}\Epic\EpicGamesLauncher\Data\Manifests")
             else:
                 self.closed_dialog.emit()
+
+            logger.error(f"FindEpicGames: {e}")
 
 
 
@@ -153,6 +162,7 @@ class Worker1(QThread):
             self.main_window.FetchInstalledGames(app_ids, app_names, 'epic')
             self.finished.emit()
 
-        except Exception:
+        except Exception as e:
             self.progress.emit(self.main_window, str, isError:=True)
             self.finished.emit()
+            logger.error(f"FindEpicGamesInThread: {e}")

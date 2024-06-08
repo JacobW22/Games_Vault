@@ -11,6 +11,8 @@ from PySide6.QtWidgets import QFileDialog
 from PySide6.QtGui import QImage
 from PySide6.QtCore import QThread, Signal, Qt, QObject
 
+from Logging import LoggingSetup
+
 from layout.MessageBox import MessageBox
 from layout.ErrorMessage import ErrorMessage
 from layout.InputDialog import InputDialog
@@ -21,6 +23,10 @@ from layout.CircularAvatar import mask_image
 config = configparser.ConfigParser()
 config.read('config.ini')
 STEAM_API_KEY = config['API_KEYS']['STEAM_API_KEY']
+
+
+# Initialize the logger
+logger = LoggingSetup.setup_logging()
 
 
 class Steam(QObject):
@@ -42,7 +48,8 @@ class Steam(QObject):
             else:
                 raise Exception
 
-        except Exception:
+
+        except Exception as e:
             error_msg = ErrorMessage("Can't Find Steam Libraries")
             error_msg.exec()
 
@@ -72,6 +79,8 @@ class Steam(QObject):
             else:
                 self.closed_dialog.emit()
 
+            logger.error(f"FindInstalledSteamGames: {e}")
+
 
 
     def FetchRecentSteamGames(self, main_window, steamid):
@@ -89,8 +98,8 @@ class Steam(QObject):
                 if action.text() not in context_menu_items:
                     action.deleteLater()
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"FetchRecentGames: {e}")
 
 
         for game in player_info["games"]:
@@ -98,7 +107,7 @@ class Steam(QObject):
                 game_icon_urls.append([f"https://steamcdn-a.akamaihd.net/steam/apps/{game['appid']}/library_600x900_2x.jpg", game['appid'], game['name']])
             except Exception as e:
                 game_icon_urls.append([[], game['appid'], game['name']])
-                print('Error fetching Image', e)
+                logger.error(f"FetchRecentSteamGames: {e}")
 
         return game_icon_urls
 
@@ -151,7 +160,7 @@ class Steam(QObject):
                     query = "UPDATE user SET steam_id = ? WHERE id = 1;"
                     main_window.database.execute_query(main_window.database.conn, query, [steamid])
 
-            except Exception:
+            except Exception as e:
                 info_message = """
                     <html><body>
                     <center>
@@ -162,6 +171,7 @@ class Steam(QObject):
                 """
                 error_msg = ErrorMessage(info_message)
                 error_msg.exec()
+                logger.error(f"ChangeSteamID: {e}")
 
 
 
@@ -268,9 +278,10 @@ class Worker1(QThread):
                 self.main_window.FetchInstalledGames(app_ids, app_names, 'steam')
                 self.finished.emit()
 
-        except Exception:
+        except Exception as e:
             self.progress.emit(self.main_window, str, isError:=True)
             self.finished.emit()
+            logger.error(f"FindInstalledSteamGamesInThread: {e}")
 
 
 
@@ -319,12 +330,13 @@ class Worker2(QThread):
                     self.progress.emit(game["appid"], game["name"], 'steam',  image.tobytes(), playtime, "Owned_Games")
 
                 except Exception as e:
-                    print(e)
                     self.progress.emit(game["appid"], game["name"], 'steam', None, playtime, "Owned_Games")
+                    logger.error(f"FindOwnedSteamGamesInThread: {e}")
+
 
             self.finished.emit(self.main_window, total_user_playtime)
 
         except Exception as e:
-            print(e)
+            logger.error(f"FindOwnedSteamGamesInThread: {e}")
             self.finished.emit(self.main_window, total_user_playtime)
 

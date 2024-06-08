@@ -18,6 +18,7 @@ from PySide6.QtCore import QThread, Signal, QRect, Qt, QSize, QTimer, QPointF
 from Steam import Steam
 from Epic import Epic
 from database import Database
+from Logging import LoggingSetup
 
 from layout.ui_form import Ui_MainWindow
 from layout.FlowLayout import FlowLayout
@@ -39,6 +40,10 @@ kernel32.SetConsoleTitleW("Games Vault")
 config = configparser.ConfigParser()
 config.read('config.ini')
 STEAM_API_KEY = config['API_KEYS']['STEAM_API_KEY']
+
+
+# Initialize the logger
+logger = LoggingSetup.setup_logging()
 
 
 class MainWindow(QMainWindow):
@@ -187,8 +192,8 @@ class MainWindow(QMainWindow):
         try:
             if self.ui.Owned_games_content.children()[1].objectName() == "info_label":
                 self.ui.Owned_games_content.children()[1].setMinimumHeight(self.ui.centralwidget.height()-125)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"resizeEvent: {e}")
 
 
 
@@ -287,7 +292,7 @@ class MainWindow(QMainWindow):
                 self.ui.user_total_playtime.setText(display_modes[mode])
 
             except Exception as e:
-                print(e)
+                logger.error(f"ChangeUserTotalPlaytimeDisplayMode: {e}")
 
 
 
@@ -312,8 +317,10 @@ class MainWindow(QMainWindow):
         if self.sender() or from_db:
             try:
                 sender = self.sender().objectName()
-            except Exception:
+            except Exception as e:
                 sender = None
+                logger.error(f"SetImageCoverWidth: {e}")
+
 
             if sender == "set_img_cover_width" or from_db == "set_img_cover_width":
                 games = self.ui.Installed_games_content.children()
@@ -371,8 +378,9 @@ class MainWindow(QMainWindow):
             try:
                 image =  Image.open(requests.get(url_and_appid[0], stream=True).raw)
                 q_image = QImage(image.tobytes(), image.width, image.height, QImage.Format.Format_RGB888)
-            except Exception:
+            except Exception as e:
                 q_image = None
+                logger.error(f"UpdateRecentGamesGUI: {e}")
 
 
             fit_width = 185
@@ -557,7 +565,7 @@ class MainWindow(QMainWindow):
             self.ui.installed_games_quantity.setText(f'{len(self.ui.Installed_games_content.children())-1} Games ({providers_text})')
 
         except Exception as e:
-            pass
+            logger.error(f"AddGameToGUI: {e}")
 
 
 
@@ -790,12 +798,13 @@ class MainWindow(QMainWindow):
 
             self.showMinimized()
 
-        except Exception:
+        except Exception as e:
             Notification(
                 app_id="Games Vault",
                 title='Error Ocurred',
                 msg=f'Error occured while launching {app_name}'
             ).show()
+            logger.error(f"LaunchGame: {e}")
 
 
 
@@ -817,8 +826,8 @@ class MainWindow(QMainWindow):
             self.threads.append(self.thread)
             self.thread.start()
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"FetchInstalledGames: {e}")
 
 
 
@@ -842,8 +851,9 @@ class Worker(QThread):
         for appid_and_name in zip(self.app_ids, self.app_names):
             try:
                 game_icon_urls.append([f"https://steamcdn-a.akamaihd.net/steam/apps/{appid_and_name[0]}/library_600x900_2x.jpg", appid_and_name[0], appid_and_name[1]])
-            except Exception:
+            except Exception as e:
                 game_icon_urls.append([[], appid_and_name[0], appid_and_name[1]])
+                logger.error(f"FindGameCovers: {e}")
 
 
         for url_and_appid in game_icon_urls:
@@ -853,8 +863,9 @@ class Worker(QThread):
                 image = image.resize((200, 500))
                 self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, image.tobytes(), None, "Installed_Games")
 
-            except Exception:
+            except Exception as e:
                 self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, None, None, "Installed_Games")
+                logger.error(f"FindGameCovers: {e}")
 
         self.finished.emit()
 
