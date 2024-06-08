@@ -595,8 +595,8 @@ class MainWindow(QMainWindow):
 
             steamid = user_info[1]
             open_widget_on_start = user_info[2]
-            img_cover_width = user_info[-5]
-            img_cover_width_owned = user_info[-4]
+            img_cover_width = user_info[-6]
+            img_cover_width_owned = user_info[-5]
             installed_epic_games = user_info[-3]
             installed_steam_games = user_info[-2]
             total_user_playtime_in_minutes = user_info[-1]
