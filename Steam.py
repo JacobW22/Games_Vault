@@ -9,26 +9,36 @@ from PIL.ImageQt import ImageQt
 
 from PySide6.QtWidgets import QFileDialog
 from PySide6.QtGui import QImage
-from PySide6.QtCore import QThread, Signal, Qt
+from PySide6.QtCore import QThread, Signal, Qt, QObject
 
 from layout.MessageBox import MessageBox
 from layout.ErrorMessage import ErrorMessage
 from layout.InputDialog import InputDialog
 from layout.CircularAvatar import mask_image
 
+
 # Keys
 config = configparser.ConfigParser()
 config.read('config.ini')
 STEAM_API_KEY = config['API_KEYS']['STEAM_API_KEY']
 
-class Steam:
+
+class Steam(QObject):
+
     steam = steam_api(STEAM_API_KEY)
     threads = []
+    closed_dialog = Signal()
 
-    def FindSteamGames(self, main_window, directory=f"{os.getenv('SystemDrive')}\Program Files (x86)\Steam"):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+
+
+    def FindInstalledSteamGames(self, main_window, directory=f"{os.getenv('SystemDrive')}\Program Files (x86)\Steam"):
         try:
             if directory:
-                self.RunInThread(main_window, func="FindSteamGames", directory=directory)
+                self.RunInThread(main_window, func="FindInstalledSteamGames", directory=directory)
             else:
                 raise Exception
 
@@ -58,7 +68,10 @@ class Steam:
             )
 
             if directory:
-                self.RunInThread(main_window, func="FindSteamGames", directory=directory)
+                self.RunInThread(main_window, func="FindInstalledSteamGames", directory=directory)
+            else:
+                self.closed_dialog.emit()
+
 
 
     def FetchRecentSteamGames(self, main_window, steamid):
@@ -70,14 +83,15 @@ class Steam:
                 for game in main_window.ui.Steam_recent_games.children()[1:]:
                     game.deleteLater()
 
-
             context_menu_items = ["Open", "Hide", "Quit"]
 
             for action in main_window.tray_menu.actions():
                 if action.text() not in context_menu_items:
                     action.deleteLater()
+
         except Exception:
             pass
+
 
         for game in player_info["games"]:
             try:
@@ -105,6 +119,7 @@ class Steam:
 
         if dialog.exec():
             steamid = dialog.get_input()
+
             try:
                 user_info = self.steam.users.get_user_details(steamid)["player"]
                 main_window.ui.user_display_name.setText(f"{user_info['personaname']}")
@@ -126,15 +141,15 @@ class Steam:
                     pass
 
                 if main_window.database.conn:
-                    sql = "DELETE FROM Owned_Games;"
-                    main_window.database.execute_query(main_window.database.conn, sql)
+                    query = "DELETE FROM Owned_Games;"
+                    main_window.database.execute_query(main_window.database.conn, query)
 
 
                 self.RunInThread(main_window, "FindOwnedSteamGames", steamid=steamid)
 
                 if main_window.database.conn:
-                    sql = "UPDATE user SET steam_id = ? WHERE id = 1;"
-                    main_window.database.execute_query(main_window.database.conn, sql, [steamid])
+                    query = "UPDATE user SET steam_id = ? WHERE id = 1;"
+                    main_window.database.execute_query(main_window.database.conn, query, [steamid])
 
             except Exception:
                 info_message = """
@@ -149,19 +164,22 @@ class Steam:
                 error_msg.exec()
 
 
+
     def UpdateSteamGamesNumberInDb(self, main_window, games, isError):
-        if isError == False:
-            if main_window.database.conn:
-                sql = "UPDATE User SET installed_games_from_steam = ? WHERE id = 1"
-                main_window.database.execute_query(main_window.database.conn, sql, [games])
-        else:
-            self.FindSteamGames(main_window, directory=None)
+        match isError:
+            case False:
+                if main_window.database.conn:
+                    query = "UPDATE User SET installed_games_from_steam = ? WHERE id = 1"
+                    main_window.database.execute_query(main_window.database.conn, query, [games])
+            case True:
+                self.FindInstalledSteamGames(main_window, directory=None)
+
 
 
     def UpdateTotalUserPlaytimeInDb(self, main_window, total_user_playtime):
         if main_window.database.conn:
-            sql = "UPDATE User SET total_user_playtime_in_minutes = ? WHERE id = 1"
-            main_window.database.execute_query(main_window.database.conn, sql, [total_user_playtime])
+            query = "UPDATE User SET total_user_playtime_in_minutes = ? WHERE id = 1"
+            main_window.database.execute_query(main_window.database.conn, query, [total_user_playtime])
 
         self.worker2.finished.connect(self.thread.quit)
         self.worker2.wait()
@@ -169,16 +187,17 @@ class Steam:
         self.thread.finished.connect(self.thread.deleteLater)
 
 
+
     # Multi-threading
     def RunInThread(self, main_window, func, steamid=None,  directory=None):
         self.thread = QThread()
         self.threads.append(self.thread)
 
-        if func == "FindSteamGames":
-            self.worker1 = Worker1(self.steam, main_window, directory)
+        if func == "FindInstalledSteamGames":
+            self.worker1 = Worker1(self.steam, self.closed_dialog, main_window, directory)
             self.worker1.moveToThread(self.thread)  
 
-            self.thread.started.connect(self.worker1.FindSteamGamesInThread)
+            self.thread.started.connect(self.worker1.FindInstalledSteamGamesInThread)
             self.worker1.finished.connect(self.thread.quit)
             self.worker1.finished.connect(self.worker1.deleteLater)
             self.worker1.progress.connect(self.UpdateSteamGamesNumberInDb)
@@ -190,24 +209,30 @@ class Steam:
             self.worker2.setObjectName("owned_games")
             self.worker2.moveToThread(self.thread)
 
-            self.worker2.progress.connect(main_window.UpdateDb)
+            self.worker2.progress.connect(main_window.UpdateGames)
             self.worker2.progress.connect(main_window.AddGameToGUI_Owned)
             self.thread.started.connect(self.worker2.FindOwnedSteamGamesInThread)
             self.worker2.finished.connect(self.UpdateTotalUserPlaytimeInDb)
             self.thread.start()
 
 
+
 class Worker1(QThread):
+
     finished = Signal()
     progress = Signal(object, int, bool)
 
-    def __init__(self, steam, main_window, directory, parent=None):
+
+    def __init__(self, steam, closed_dialog, main_window, directory, parent=None):
         super().__init__(parent)
         self.steam = steam
         self.main_window = main_window
         self.directory = directory
+        self.closed_dialog = closed_dialog
 
-    def FindSteamGamesInThread(self):
+
+
+    def FindInstalledSteamGamesInThread(self):
         try:
             with open(f"{self.directory}/steamapps/libraryfolders.vdf", "r") as file:
                 vdf_with_libraries = file.read()
@@ -217,8 +242,11 @@ class Worker1(QThread):
                 app_ids = [key for sub_dict in libraries.values() for key in sub_dict]
                 app_names = []
 
+                self.closed_dialog.emit()
                 self.main_window.ui.steam_dir_info.setText("⌛ Working...")
                 self.main_window.ui.steam_dir_info.setStyleSheet("color: rgb(0, 255, 255);")
+
+
                 for appid in app_ids:
                     game = self.steam.apps.search_games(appid)
 
@@ -245,15 +273,20 @@ class Worker1(QThread):
             self.finished.emit()
 
 
+
 class Worker2(QThread):
+
     finished = Signal(object, int)
     progress = Signal(int, str, str, bytes, int, str)
+
 
     def __init__(self, steam, main_window, steamid, parent=None):
         super().__init__(parent)
         self.steam = steam
         self.main_window = main_window
         self.steamid = steamid
+
+
 
     def FindOwnedSteamGamesInThread(self):
         try:
@@ -265,8 +298,10 @@ class Worker2(QThread):
                 gui_item.deleteLater()
 
             total_user_playtime = 0
+
             for game in result["games"]:
                 img_icon_url = f"http://media.steampowered.com/steamcommunity/public/images/apps/{game['appid']}/{game['img_icon_url']}.jpg"
+
                 try:
                     try:
                         playtime = (game["playtime_windows_forever"] + game["playtime_mac_forever"] + game["playtime_linux_forever"])
@@ -277,9 +312,12 @@ class Worker2(QThread):
 
                     self.main_window.ui.user_total_playtime.setText(f"Total playtime: {total_user_playtime//60}h {total_user_playtime%60}m")
                     self.main_window.ui.user_total_playtime.setCursor(Qt.PointingHandCursor)
+
+
                     response = requests.get(img_icon_url, stream=True)
                     image =  Image.open(response.raw)
                     self.progress.emit(game["appid"], game["name"], 'steam',  image.tobytes(), playtime, "Owned_Games")
+
                 except Exception as e:
                     print(e)
                     self.progress.emit(game["appid"], game["name"], 'steam', None, playtime, "Owned_Games")

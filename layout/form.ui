@@ -614,14 +614,17 @@
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>64</height>
+                      <height>70</height>
                      </size>
                     </property>
                     <property name="maximumSize">
                      <size>
                       <width>415</width>
-                      <height>64</height>
+                      <height>70</height>
                      </size>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true"/>
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_3">
                      <property name="spacing">
@@ -653,6 +656,9 @@
                          <height>64</height>
                         </size>
                        </property>
+                       <property name="styleSheet">
+                        <string notr="true"/>
+                       </property>
                        <property name="text">
                         <string/>
                        </property>
@@ -661,6 +667,9 @@
                        </property>
                        <property name="scaledContents">
                         <bool>true</bool>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                        </property>
                        <property name="margin">
                         <number>0</number>
@@ -672,9 +681,18 @@
                      </item>
                      <item>
                       <widget class="QWidget" name="widget_9" native="true">
-                       <layout class="QVBoxLayout" name="verticalLayout_17">
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true"/>
+                       </property>
+                       <layout class="QVBoxLayout" name="verticalLayout_17" stretch="0,0,0">
                         <property name="spacing">
-                         <number>6</number>
+                         <number>25</number>
                         </property>
                         <property name="leftMargin">
                          <number>3</number>
@@ -683,19 +701,33 @@
                          <number>0</number>
                         </property>
                         <property name="bottomMargin">
-                         <number>15</number>
+                         <number>25</number>
                         </property>
                         <item>
                          <widget class="QLabel" name="user_display_name">
+                          <property name="sizePolicy">
+                           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                           </sizepolicy>
+                          </property>
                           <property name="minimumSize">
                            <size>
                             <width>0</width>
-                            <height>30</height>
+                            <height>40</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>16777215</width>
+                            <height>16777215</height>
                            </size>
                           </property>
                           <property name="font">
                            <font>
                             <pointsize>20</pointsize>
+                            <italic>false</italic>
+                            <bold>false</bold>
                             <stylestrategy>PreferDefault</stylestrategy>
                            </font>
                           </property>
@@ -703,10 +735,19 @@
                            <cursorShape>ArrowCursor</cursorShape>
                           </property>
                           <property name="styleSheet">
-                           <string notr="true">color: rgb(0, 255, 0); margin-bottom: 5px;</string>
+                           <string notr="true">color: rgb(0, 255, 0);</string>
                           </property>
                           <property name="text">
                            <string>Guest</string>
+                          </property>
+                          <property name="scaledContents">
+                           <bool>false</bool>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                          </property>
+                          <property name="wordWrap">
+                           <bool>false</bool>
                           </property>
                           <property name="margin">
                            <number>0</number>
@@ -728,7 +769,10 @@
                            <string notr="true">color: rgb(0, 255, 255);</string>
                           </property>
                           <property name="text">
-                           <string/>
+                           <string>Total playtime: 0</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                           </property>
                          </widget>
                         </item>
@@ -737,14 +781,17 @@
                           <property name="minimumSize">
                            <size>
                             <width>0</width>
-                            <height>35</height>
+                            <height>20</height>
                            </size>
                           </property>
                           <property name="styleSheet">
-                           <string notr="true">color: darkgrey;</string>
+                           <string notr="true">color: darkgrey; </string>
                           </property>
                           <property name="text">
-                           <string/>
+                           <string>Refresh in: 0</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                           </property>
                          </widget>
                         </item>
@@ -923,7 +970,7 @@
                        <x>0</x>
                        <y>0</y>
                        <width>1198</width>
-                       <height>286</height>
+                       <height>280</height>
                       </rect>
                      </property>
                      <property name="sizePolicy">

@@ -5,20 +5,31 @@ import configparser
 
 from steam_web_api import Steam
 from PySide6.QtWidgets import QFileDialog
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import QThread, Signal, QObject
 
 from layout.MessageBox import MessageBox
 from layout.ErrorMessage import ErrorMessage
+
 
 # Keys
 config = configparser.ConfigParser()
 config.read('config.ini')
 STEAM_API_KEY = config['API_KEYS']['STEAM_API_KEY']
 
-class Epic:
-    steam = Steam(STEAM_API_KEY)
 
-    def FindEpicGames_Games(self, main_window, directory = f"{os.getenv('SystemDrive')}\ProgramData\Epic\EpicGamesLauncher\Data\Manifests"):
+class Epic(QObject):
+
+    steam = Steam(STEAM_API_KEY)
+    threads = []
+    closed_dialog = Signal()
+
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+
+
+    def FindEpicGames(self, main_window, directory = f"{os.getenv('SystemDrive')}\ProgramData\Epic\EpicGamesLauncher\Data\Manifests"):
         try:
             if not directory:
                 raise Exception
@@ -51,23 +62,30 @@ class Epic:
                options=options,
             )
             if directory:
-                self.FindEpicGames_Games(main_window, f"{directory}\Epic\EpicGamesLauncher\Data\Manifests")
+                self.FindEpicGames(main_window, f"{directory}\Epic\EpicGamesLauncher\Data\Manifests")
+            else:
+                self.closed_dialog.emit()
+
 
 
     def UpdateEpicGamesNumberInDb(self, main_window, games, isError):
-        if isError == False:
-            if main_window.database.conn:
-                sql = "UPDATE User SET installed_games_from_epic = ? WHERE id = 1"
-                main_window.database.execute_query(main_window.database.conn, sql, [games])
-        else:
-            self.FindEpicGames_Games(main_window, directory = None)
+        match isError:
+            case False:
+                if main_window.database.conn:
+                    query = "UPDATE User SET installed_games_from_epic = ? WHERE id = 1"
+                    main_window.database.execute_query(main_window.database.conn, query, [games])
+            case True:
+                self.FindEpicGames(main_window, directory = None)
+
 
 
     # Multi-threading
     def RunInThread(self, main_window, directory, func):
         self.thread = QThread()
-        self.worker1 = Worker1(self.steam, main_window, directory)
+        self.threads.append(self.thread)
+        self.worker1 = Worker1(self.steam, self.closed_dialog, main_window, directory)
         self.worker1.moveToThread(self.thread)
+
         if func == "FindEpicGames":
             self.thread.started.connect(self.worker1.FindEpicGamesInThread)
             self.worker1.finished.connect(self.thread.quit)
@@ -78,21 +96,29 @@ class Epic:
         self.thread.start()
 
 
+
 class Worker1(QThread):
+
     finished = Signal()
     progress = Signal(object, int, bool)
 
-    def __init__(self, steam, main_window, directory, parent=None):
+
+    def __init__(self, steam, closed_dialog, main_window, directory, parent=None):
         super().__init__(parent)
         self.steam = steam
         self.main_window = main_window
         self.directory = directory
+        self.closed_dialog = closed_dialog
+
+
 
     def FindEpicGamesInThread(self):
         try:
             item_files = glob.glob(os.path.join(self.directory, '*.item'))
+
             if not item_files:
                 raise Exception("Can't find Epic Games Data Folder")
+
             app_ids = []
             app_names = []
 
@@ -113,6 +139,8 @@ class Worker1(QThread):
 
             games = len(app_ids)
             self.progress.emit(self.main_window, games, isError:=False)
+            self.closed_dialog.emit()
+
             self.main_window.ui.epic_dir_info.setText(f'✔ {len(app_ids)} Games installed')
             self.main_window.ui.epic_dir_info.setStyleSheet(
                 """

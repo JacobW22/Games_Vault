@@ -25,6 +25,7 @@ from layout.RichTextPushButton import RichTextPushButton
 from layout.CircularAvatar import mask_image
 from desktop_widget import DesktopWidget
 
+
 # Windows taskbar and task manager process name config
 myappid = u'GamesVault_v1.0'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
@@ -47,6 +48,7 @@ class MainWindow(QMainWindow):
     games = None
     threads = []
     installed_games_providers = []
+
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -91,7 +93,7 @@ class MainWindow(QMainWindow):
         """)
 
 
-        # System tray menu and app icon
+        # System tray menu and app icon setup
         self.tray_icon = QSystemTrayIcon()
         app_icon = QIcon(":/icons/resources\icons/app_icon.png")
 
@@ -119,9 +121,9 @@ class MainWindow(QMainWindow):
         self.Epic = Epic()
 
 
-        # Initialize buttons and actions
-        self.ui.find_epic_games_directory.clicked.connect(lambda: self.Epic.FindEpicGames_Games(self))
-        self.ui.find_steam_directory.clicked.connect(lambda: self.Steam.FindSteamGames(self))
+        # Initialize buttons connections and actions
+        self.ui.find_epic_games_directory.clicked.connect(lambda: self.Epic.FindEpicGames(self))
+        self.ui.find_steam_directory.clicked.connect(lambda: self.Steam.FindInstalledSteamGames(self))
         self.ui.open_widget.clicked.connect(self.OpenWidget)
         self.ui.launch_widget_on_start.clicked.connect(self.UpdateSettings)
         self.change_steam_id.clicked.connect(lambda: self.Steam.ChangeSteamID(self))
@@ -143,14 +145,17 @@ class MainWindow(QMainWindow):
         self.quit_action.triggered.connect(self.QuitApplication)
         self.tray_icon.show()
 
-        # Run checks on database items
+
+        # Run checks on database
         self.CheckDb()
 
 
-    # System tray menu
+
+    # System tray menu operations
     def closeEvent(self, event):
         event.ignore()
         self.hide()
+
 
 
     def ShowNormal(self, reason):
@@ -161,15 +166,18 @@ class MainWindow(QMainWindow):
             pass
 
 
+
     def HideApplication(self):
         self.hide()
+
 
 
     def QuitApplication(self):
         QApplication.instance().quit()
 
 
-    # GUI
+
+    # GUI operations
     def resizeEvent(self, event):
         self.ui.search_widget_container.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
         self.ui.search_widget_container_2.setMaximumWidth((self.ui.centralwidget.width()/3)+15)
@@ -183,6 +191,7 @@ class MainWindow(QMainWindow):
             pass
 
 
+
     def OpenWidget(self):
         self.desktop_widget = DesktopWidget()
         self.desktop_widget.show()
@@ -193,6 +202,7 @@ class MainWindow(QMainWindow):
             pos_x, pos_y, width, height = result[0][0], result[0][1], result[0][2], result[0][3]
             self.desktop_widget.move(pos_x, pos_y)
             self.desktop_widget.resize(width, height)
+
 
         self.installed_games_container = self.ui.installed_games_container
 
@@ -270,30 +280,30 @@ class MainWindow(QMainWindow):
                 total_user_playtime_in_minutes = result[0]
                 display_modes = [(f"Total playtime: {total_user_playtime_in_minutes//60}h {total_user_playtime_in_minutes%60}m"), (f"Total playtime: {total_user_playtime_in_minutes//1440} days")]
 
-                i = 0
+                mode = 0
 
-                while self.ui.user_total_playtime.text() == display_modes[i]:
-                    i += 1
+                while self.ui.user_total_playtime.text() == display_modes[mode]:
+                    mode += 1
+                self.ui.user_total_playtime.setText(display_modes[mode])
 
-                self.ui.user_total_playtime.setText(display_modes[i])
             except Exception as e:
                 print(e)
 
 
 
     def SearchGameOnTextChanged(self, text):
-        sender = self.sender().objectName()
-
-        if sender == "search_games":
-            games = self.ui.Installed_games_content.children()[1:]
-        elif sender == "search_games_owned":
-            games = self.ui.Owned_games_content.children()[1:]
+        match self.sender().objectName():
+            case "search_games":
+                games = self.ui.Installed_games_content.children()[1:]
+            case "search_games_owned":
+                games = self.ui.Owned_games_content.children()[1:]
 
         for game in games:
             if text.lower() not in (game.objectName()).lower():
                 game.hide()
             else:
                 game.show()
+
 
 
     def SetImageCoverWidth(self, value, from_db=None):
@@ -330,6 +340,7 @@ class MainWindow(QMainWindow):
                         game.children()[0].setFont(font)
                         game.children()[1].setFont(font)
 
+
             elif sender == "set_img_cover_width_owned" or from_db == "set_img_cover_width_owned":
                 games = self.ui.Owned_games_content.children()
                 self.ui.img_cover_width_info_owned.setText(f'{value}px')
@@ -344,13 +355,14 @@ class MainWindow(QMainWindow):
 
     def UpdateImageCoverWidthInDatabase(self, slider):
         if self.database.conn:
-            if slider.objectName() == "set_img_cover_width":
-                sql = "UPDATE user SET game_cover_img = ? WHERE id = 1;"
-                self.database.execute_query(self.database.conn, sql, [slider.value()])
+            match slider.objectName():
+                case  "set_img_cover_width":
+                    query = "UPDATE user SET game_cover_img = ? WHERE id = 1;"
+                    self.database.execute_query(self.database.conn, query, [slider.value()])
 
-            elif slider.objectName() == "set_img_cover_width_owned":
-                sql = "UPDATE user SET owned_game_cover_img = ? WHERE id = 1;"
-                self.database.execute_query(self.database.conn, sql, [slider.value()])
+                case  "set_img_cover_width_owned":
+                    query = "UPDATE user SET owned_game_cover_img = ? WHERE id = 1;"
+                    self.database.execute_query(self.database.conn, query, [slider.value()])
 
 
 
@@ -362,11 +374,13 @@ class MainWindow(QMainWindow):
             except Exception:
                 q_image = None
 
+
             fit_width = 185
             container = QWidget()
             label = QLabel(container)
             btn_label = QLabel(container)
             play_button = QPushButton(btn_label)
+
 
             if q_image:
                 pixmap = QPixmap.fromImage(q_image)
@@ -412,9 +426,11 @@ class MainWindow(QMainWindow):
             btn_label.setProperty('geometry', QRect( 0, 0, fit_width, fit_width*1.5) )
             btn_label.setAlignment(Qt.AlignCenter)
             btn_label.setWordWrap(True)
+
             font = label.font()
             font.setPointSize(fit_width/8)
             btn_label.setFont(font)
+
             btn_label.setText(f"▶\n{url_and_appid[2].encode().decode('unicode-escape')}")
             btn_label.setStyleSheet(
             """
@@ -434,10 +450,11 @@ class MainWindow(QMainWindow):
 
             """
             )
+            self.play_game = QAction(f"{url_and_appid[2]}", self)
             font = self.tray_menu.font()
             font.setPointSize(12)
-            self.play_game = QAction(f"{url_and_appid[2]}", self)
             self.play_game.setFont(font)
+
             self.tray_menu.insertAction(self.tray_menu.actions()[0], self.play_game)
             self.play_game.triggered.connect(lambda sacrificial="", appid=url_and_appid[1], appname=url_and_appid[2]: self.LaunchGame(appid, appname, provider='steam'))
             play_button.clicked.connect(lambda sacrificial="", appid=url_and_appid[1], appname=url_and_appid[2]: self.LaunchGame(appid, appname, provider='steam'))
@@ -447,13 +464,19 @@ class MainWindow(QMainWindow):
             self.ui.Steam_recent_games.update()
 
 
+
     def AddGameToGUI(self, launch_id, app_name, provider, image, *args):
         try:
+            for item in self.ui.Installed_games_content.children():
+                if app_name == item.objectName():
+                    raise Exception("Game already in GUI")
+
             container = QWidget()
             label = QLabel(container)
             btn_label = QLabel(container)
             play_button = QPushButton(btn_label)
             fit_width = self.ui.set_img_cover_width.value()
+
 
             if image:
                 q_image = QImage(image, 200, 500, QImage.Format.Format_RGB888)
@@ -467,6 +490,7 @@ class MainWindow(QMainWindow):
                 label.setWordWrap(True)
                 label.setText(f'{app_name}')
                 label.setStyleSheet("background-color: rgb(42, 42, 42);")
+
 
             container.setObjectName(f"{app_name.encode().decode('unicode-escape')}")
             container.setFixedSize(fit_width, fit_width*1.5)
@@ -499,9 +523,11 @@ class MainWindow(QMainWindow):
             btn_label.setProperty('geometry', QRect( 0, 0, fit_width, fit_width*1.5) )
             btn_label.setAlignment(Qt.AlignCenter)
             btn_label.setWordWrap(True)
+
             font = label.font()
             font.setPointSize(fit_width/8)
             btn_label.setFont(font)
+
             btn_label.setText(f"▶\n{app_name.encode().decode('unicode-escape')}")
             btn_label.setStyleSheet(
             """
@@ -522,18 +548,17 @@ class MainWindow(QMainWindow):
             """
             )
             play_button.clicked.connect(lambda: self.LaunchGame(launch_id, app_name, provider))
-
             self.ui.Installed_games_content.layout().addWidget(container)
 
             if provider.capitalize() not in self.installed_games_providers:
                 self.installed_games_providers.append(provider.capitalize())
 
             providers_text = ' + '.join(self.installed_games_providers)
-
             self.ui.installed_games_quantity.setText(f'{len(self.ui.Installed_games_content.children())-1} Games ({providers_text})')
 
-        except Exception:
+        except Exception as e:
             pass
+
 
 
     def AddGameToGUI_Owned(self, launch_id, app_name, provider, image, playtime, *args):
@@ -542,11 +567,13 @@ class MainWindow(QMainWindow):
         label = QPushButton()
         container.layout().addWidget(label)
 
+
         if image:
             q_image = QImage(image, 32, 32, QImage.Format.Format_RGB888)
             pixmap = QPixmap.fromImage(q_image)
             label.setIcon(QIcon(pixmap))
             label.setIconSize(QSize(32,32))
+
 
         font = label.font()
         font.setPointSize(12)
@@ -554,6 +581,7 @@ class MainWindow(QMainWindow):
 
         if playtime == None:
             playtime = 0
+
         label.setText(f" {app_name}\n 🕑{playtime//60}h")
         label.setToolTip(app_name)
         container.setObjectName(f"{app_name.encode().decode('unicode-escape')}")
@@ -602,6 +630,7 @@ class MainWindow(QMainWindow):
             total_user_playtime_in_minutes = user_info[-1]
 
 
+
             if steamid != 0:
                 info = self.steam.users.get_user_details(steamid)["player"]
                 self.ui.user_display_name.setText(f"{info['personaname']}")
@@ -616,10 +645,12 @@ class MainWindow(QMainWindow):
                 self.UpdateRecentGamesGUI(self.Steam.FetchRecentSteamGames(self, steamid))
 
 
+
             if open_widget_on_start == True:
                 self.ui.launch_widget_on_start.setText("On")
                 self.ui.launch_widget_on_start.setStyleSheet("color: rgb(0, 255, 0);")
                 self.OpenWidget()
+
 
 
             if installed_steam_games != 0:
@@ -632,6 +663,8 @@ class MainWindow(QMainWindow):
                     """
                 )
 
+
+
             if installed_epic_games != 0:
                 self.ui.epic_dir_info.setText(f'✔ {installed_epic_games} Games installed')
                 self.ui.epic_dir_info.setStyleSheet(
@@ -641,27 +674,38 @@ class MainWindow(QMainWindow):
                         }
                     """
                 )
+
+
+
             if total_user_playtime_in_minutes != 0:
                 self.ui.user_total_playtime.setText(f"Total playtime: {total_user_playtime_in_minutes//60}h {total_user_playtime_in_minutes%60}m")
                 self.ui.user_total_playtime.setCursor(Qt.PointingHandCursor)
+
+
 
             if installed_games:
                 for game in installed_games:
                     self.AddGameToGUI(*game[1:])
             else:
-                self.Steam.FindSteamGames(self)
-                self.Epic.FindEpicGames_Games(self)
+                self.Epic.closed_dialog.connect(lambda: self.Steam.FindInstalledSteamGames(self))
+                self.Steam.closed_dialog.connect(lambda: self.Steam.ChangeSteamID(self))
+                self.Epic.FindEpicGames(self)
+
+
 
             if owned_games:
                 for game in owned_games:
                     self.AddGameToGUI_Owned(*game)
             else:
+
                 if steamid != 0:
                     try:
                         self.ui.info_label.deleteLater()
                     except Exception:
                         pass
+
                     self.Steam.RunInThread(self, steamid=steamid, func="FindOwnedSteamGames")
+
                 else:
                     info_label = QLabel()
                     info_label.setText("""Set your steam ID in the "Last Played" Tab""")
@@ -669,9 +713,11 @@ class MainWindow(QMainWindow):
                     info_label.setAlignment(Qt.AlignCenter)
                     info_label.setMinimumHeight(self.ui.centralwidget.height())
                     info_label.setObjectName("info_label")
+
                     font = info_label.font()
                     font.setPointSize(14)
                     info_label.setFont(font)
+
                     self.ui.Owned_games_content.layout().addWidget(info_label)
 
 
@@ -682,36 +728,38 @@ class MainWindow(QMainWindow):
 
 
 
-    def UpdateDb(self, launch_id, app_name, provider, image, playtime, db_destination):
+    def UpdateGames(self, launch_id, app_name, provider, image, playtime, db_destination):
         if self.database.conn:
             if image:
                 if playtime:
-                    sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image, playtime) VALUES(?,?,?,?,?,?)"
-                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, image, playtime))
+                    query = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image, playtime) VALUES(?,?,?,?,?,?)"
+                    self.database.execute_query(self.database.conn, query, (1, launch_id, app_name, provider, image, playtime))
                 else:
-                    sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
-                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, image))
+                    query = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
+                    self.database.execute_query(self.database.conn, query, (1, launch_id, app_name, provider, image))
             else:
                 if playtime:
-                    sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image, playtime) VALUES(?,?,?,?,?,?)"
-                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, None, playtime))
+                    query = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image, playtime) VALUES(?,?,?,?,?,?)"
+                    self.database.execute_query(self.database.conn, query, (1, launch_id, app_name, provider, None, playtime))
                 else:
-                    sql = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
-                    self.database.execute_query(self.database.conn, sql, (1, launch_id, app_name, provider, None))
+                    query = f"INSERT OR REPLACE INTO {db_destination}(user_id, launch_id, app_name, provider, image) VALUES(?,?,?,?,?)"
+                    self.database.execute_query(self.database.conn, query, (1, launch_id, app_name, provider, None))
 
 
 
     def UpdateSettings(self):
         if self.database.conn:
             query = "UPDATE user SET open_widget_on_start = ? WHERE id = 1;"
-            if self.sender().text() == "Off":
-                self.sender().setText("On")
-                self.sender().setStyleSheet("color: rgb(0, 255, 0);")
-                self.database.execute_query(self.database.conn, query, [True])
-            else:
-                self.sender().setText("Off")
-                self.sender().setStyleSheet("color: rgb(255, 0, 0);")
-                self.database.execute_query(self.database.conn, query, [False])
+
+            match self.sender().text():
+                case "Off":
+                    self.sender().setText("On")
+                    self.sender().setStyleSheet("color: rgb(0, 255, 0);")
+                    self.database.execute_query(self.database.conn, query, [True])
+                case "On":
+                    self.sender().setText("Off")
+                    self.sender().setStyleSheet("color: rgb(255, 0, 0);")
+                    self.database.execute_query(self.database.conn, query, [False])
 
 
 
@@ -725,10 +773,11 @@ class MainWindow(QMainWindow):
 
 
     def LaunchGame(self, launch_id, app_name, provider):
-        if provider == 'steam':
-            command = f"start steam://rungameid/{launch_id}"
-        elif provider == 'epic':
-            command = f"start com.epicgames.launcher://apps/{launch_id}?action=launch"
+        match provider:
+            case 'steam':
+                command = f"start steam://rungameid/{launch_id}"
+            case 'epic':
+                command = f"start com.epicgames.launcher://apps/{launch_id}?action=launch"
 
         try:
             subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -758,7 +807,7 @@ class MainWindow(QMainWindow):
             self.worker.setObjectName("installed_games")
             self.worker.moveToThread(self.thread)
 
-            self.worker.progress.connect(self.UpdateDb)
+            self.worker.progress.connect(self.UpdateGames)
             self.worker.progress.connect(self.AddGameToGUI)
             self.thread.started.connect(self.worker.FindGameCovers)
             self.worker.finished.connect(self.thread.quit)
@@ -772,15 +821,20 @@ class MainWindow(QMainWindow):
             pass
 
 
+
 class Worker(QThread):
+
     finished = Signal()
     progress = Signal(str, str, str, bytes, int, str)
+
 
     def __init__(self, app_ids, app_names, provider, parent=None):
         super().__init__(parent)
         self.app_ids = app_ids
         self.app_names = app_names
         self.provider = provider
+
+
 
     def FindGameCovers(self):
         game_icon_urls = []
@@ -790,6 +844,7 @@ class Worker(QThread):
                 game_icon_urls.append([f"https://steamcdn-a.akamaihd.net/steam/apps/{appid_and_name[0]}/library_600x900_2x.jpg", appid_and_name[0], appid_and_name[1]])
             except Exception:
                 game_icon_urls.append([[], appid_and_name[0], appid_and_name[1]])
+
 
         for url_and_appid in game_icon_urls:
             try:
@@ -802,6 +857,7 @@ class Worker(QThread):
                 self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, None, None, "Installed_Games")
 
         self.finished.emit()
+
 
 
 if __name__ == "__main__":
