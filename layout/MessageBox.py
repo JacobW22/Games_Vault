@@ -12,6 +12,7 @@ class MessageBox(QMessageBox):
         self.layout().setContentsMargins(20, 15, 15, 15)
         qt_msgbox_label = self.findChild(QLabel, "qt_msgbox_label")
         qt_msgbox_label.setAlignment(Qt.AlignCenter)
+        qt_msgbox_label.setTextFormat(Qt.RichText)
         qt_msgbox_buttonbox = self.findChild(QDialogButtonBox, "qt_msgbox_buttonbox")
         qt_msgbox_buttonbox.setCenterButtons(True)
 

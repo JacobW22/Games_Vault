@@ -2,6 +2,7 @@ import os
 import vdf
 import configparser
 import requests
+import json
 
 from steam_web_api import Steam as steam_api
 from PIL import Image
@@ -50,27 +51,10 @@ class Steam(QObject):
 
 
         except Exception as e:
-            error_msg = ErrorMessage("Can't Find Steam Libraries")
-            error_msg.exec()
-
-            options = QFileDialog.Options()
-            options |= QFileDialog.ShowDirsOnly
-
-            info_message = """
-            <html><body>
-            <center>
-            <p>Please select your main Steam directory.</p>
-            <a style="color: lightblue;" href="https://www.partitionwizard.com/partitionmanager/where-does-steam-install-games.html">How to find my Steam Directory</a>
-            </center>
-            </body></html>
-            """
-            msg_box = MessageBox("Steam", info_message)
-            msg_box.exec()
-
+            options = QFileDialog.ShowDirsOnly
             directory = QFileDialog.getExistingDirectory(
                None,
                "Select Your Main Steam Directory",
-               "",
                options=options,
             )
 
@@ -80,7 +64,6 @@ class Steam(QObject):
                 self.closed_dialog.emit()
 
             logger.error(f"FindInstalledSteamGames: {e}")
-
 
 
     def FetchRecentSteamGames(self, main_window, steamid):
@@ -244,9 +227,9 @@ class Worker1(QThread):
 
     def FindInstalledSteamGamesInThread(self):
         try:
-            with open(f"{self.directory}/steamapps/libraryfolders.vdf", "r") as file:
-                vdf_with_libraries = file.read()
-                parsed_vdf = vdf.loads(vdf_with_libraries)
+            with open(f"{self.directory}/steamapps/libraryfolders.vdf", "r", encoding="utf-8") as file:
+                parsed_vdf = vdf.load(file)
+
                 libraries = {index: folder['apps'].keys() for index, folder in parsed_vdf['libraryfolders'].items()}
 
                 app_ids = [key for sub_dict in libraries.values() for key in sub_dict]
@@ -279,9 +262,9 @@ class Worker1(QThread):
                 self.finished.emit()
 
         except Exception as e:
+            logger.error(f"FindInstalledSteamGamesInThread: {e}")
             self.progress.emit(self.main_window, str, isError:=True)
             self.finished.emit()
-            logger.error(f"FindInstalledSteamGamesInThread: {e}")
 
 
 

@@ -43,25 +43,7 @@ class Epic(QObject):
             self.RunInThread(main_window, directory, func="FindEpicGames")
 
         except Exception as e:
-            error_msg = ErrorMessage("Can't Find Epic Games Program Data Folder")
-            error_msg.exec()
-
-            options = QFileDialog.Options()
-            options |= QFileDialog.ShowDirsOnly
-
-
-            info_message = """
-                <html><body>
-                <center>
-                <p>Please select your 'Program Data' folder</p>
-                <a style="color: lightblue;" href="https://www.minitool.com/data-recovery/program-data-folder-windows-10.html">How to find my Program Data folder</a>
-                </center>
-                </body></html>
-            """
-
-            msg_box = MessageBox("Epic games", info_message)
-            msg_box.exec()
-
+            options = QFileDialog.ShowDirsOnly
             directory = QFileDialog.getExistingDirectory(
                None,
                "Select Your 'Program Data' folder",

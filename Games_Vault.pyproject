@@ -1,6 +1,6 @@
 {
     "files": [
-        "mainwindow.py",
+        "Games Vault.py",
         "resources.qrc",
         "config.ini",
         ".gitignore",
@@ -19,6 +19,7 @@
         "desktop_widget.py",
         "layout/desktop_widget_form.ui",
         "layout/desktop_widget_form.py",
-        "Logging.py"
+        "Logging.py",
+        "Games Vault.py"
     ]
 }

@@ -477,6 +477,7 @@ class MainWindow(QMainWindow):
         try:
             for item in self.ui.Installed_games_content.children():
                 if app_name == item.objectName():
+                    logger.info(f"{app_name}, {item.objectName()}")
                     raise Exception("Game already in GUI")
 
             container = QWidget()
@@ -875,5 +876,18 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     widget = MainWindow()
+
+    # Create a mutex
+    mutex = ctypes.windll.kernel32.CreateMutexW(None, False, "MyUniqueAppNameMutex")
+    last_error = ctypes.windll.kernel32.GetLastError()
+
+    # If the mutex already exists, another instance is running
+    if last_error == 183:  # ERROR_ALREADY_EXISTS
+        sys.exit(1)
+
     widget.show()
     sys.exit(app.exec())
+
+    # Release the mutex
+    ctypes.windll.kernel32.ReleaseMutex(mutex)
+
