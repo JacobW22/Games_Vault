@@ -51,6 +51,17 @@ class Steam(QObject):
 
 
         except Exception as e:
+            info_message = """
+                <html><body>
+                <center>
+                <p>Please select your main Steam directory.</p>
+                <a style="color: lightblue;" href="https://www.partitionwizard.com/partitionmanager/where-does-steam-install-games.html">How to find my Steam Directory</a>
+                </center>
+                </body></html>
+            """
+            msg_box = MessageBox("Steam", info_message)
+            msg_box.exec()
+
             options = QFileDialog.ShowDirsOnly
             directory = QFileDialog.getExistingDirectory(
                None,

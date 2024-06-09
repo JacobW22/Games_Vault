@@ -11,7 +11,7 @@ from PIL.ImageQt import ImageQt
 from winotify import Notification
 from ctypes import wintypes
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QPushButton, QSystemTrayIcon, QMenu, QSizePolicy, QHBoxLayout
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QPushButton, QSystemTrayIcon, QMenu, QSizePolicy, QHBoxLayout, QMessageBox
 from PySide6.QtGui import QPixmap, QImage, QCursor, QIcon, QAction
 from PySide6.QtCore import QThread, Signal, QRect, Qt, QSize, QTimer, QPointF
 
@@ -475,11 +475,6 @@ class MainWindow(QMainWindow):
 
     def AddGameToGUI(self, launch_id, app_name, provider, image, *args):
         try:
-            for item in self.ui.Installed_games_content.children():
-                if app_name == item.objectName():
-                    logger.info(f"{app_name}, {item.objectName()}")
-                    raise Exception("Game already in GUI")
-
             container = QWidget()
             label = QLabel(container)
             btn_label = QLabel(container)
@@ -813,7 +808,7 @@ class MainWindow(QMainWindow):
     def FetchInstalledGames(self, app_ids, app_names, provider):
         try:
             self.thread = QThread()
-            self.worker = Worker(app_ids, app_names, provider)
+            self.worker = Worker(self, app_ids, app_names, provider)
             self.worker.setObjectName("installed_games")
             self.worker.moveToThread(self.thread)
 
@@ -838,23 +833,29 @@ class Worker(QThread):
     progress = Signal(str, str, str, bytes, int, str)
 
 
-    def __init__(self, app_ids, app_names, provider, parent=None):
+    def __init__(self, main_window, app_ids, app_names, provider, parent=None):
         super().__init__(parent)
         self.app_ids = app_ids
         self.app_names = app_names
         self.provider = provider
+        self.main_window = main_window
 
 
 
     def FindGameCovers(self):
         game_icon_urls = []
+        games_in_gui = []
+
+        for item in self.main_window.ui.Installed_games_content.children():
+                games_in_gui.append(item.objectName())
 
         for appid_and_name in zip(self.app_ids, self.app_names):
-            try:
-                game_icon_urls.append([f"https://steamcdn-a.akamaihd.net/steam/apps/{appid_and_name[0]}/library_600x900_2x.jpg", appid_and_name[0], appid_and_name[1]])
-            except Exception as e:
-                game_icon_urls.append([[], appid_and_name[0], appid_and_name[1]])
-                logger.error(f"FindGameCovers: {e}")
+            if appid_and_name[1] not in games_in_gui:
+                try:
+                    game_icon_urls.append([f"https://steamcdn-a.akamaihd.net/steam/apps/{appid_and_name[0]}/library_600x900_2x.jpg", appid_and_name[0], appid_and_name[1]])
+                except Exception as e:
+                    game_icon_urls.append([[], appid_and_name[0], appid_and_name[1]])
+                    logger.error(f"FindGameCovers: {e}")
 
 
         for url_and_appid in game_icon_urls:
@@ -862,6 +863,7 @@ class Worker(QThread):
                 response = requests.get(url_and_appid[0], stream=True)
                 image =  Image.open(response.raw)
                 image = image.resize((200, 500))
+
                 self.progress.emit(url_and_appid[2][1], url_and_appid[2][0], self.provider, image.tobytes(), None, "Installed_Games")
 
             except Exception as e:
@@ -883,6 +885,7 @@ if __name__ == "__main__":
 
     # If the mutex already exists, another instance is running
     if last_error == 183:  # ERROR_ALREADY_EXISTS
+        QMessageBox.warning(None, "Error", "Another instance of this application is already running.")
         sys.exit(1)
 
     widget.show()
