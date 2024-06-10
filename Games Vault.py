@@ -850,7 +850,7 @@ class Worker(QThread):
                 games_in_gui.append(item.objectName())
 
         for appid_and_name in zip(self.app_ids, self.app_names):
-            if appid_and_name[1] not in games_in_gui:
+            if appid_and_name[1][0] not in games_in_gui:
                 try:
                     game_icon_urls.append([f"https://steamcdn-a.akamaihd.net/steam/apps/{appid_and_name[0]}/library_600x900_2x.jpg", appid_and_name[0], appid_and_name[1]])
                 except Exception as e:
