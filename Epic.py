@@ -1,23 +1,20 @@
 import os
 import glob
 import json
-import configparser
 
 from steam_web_api import Steam
 
 from PySide6.QtWidgets import QFileDialog
-from PySide6.QtCore import QThread, Signal, QObject
+from PySide6.QtCore import QThread, Signal, QObject, QSettings
 
 from Logging import LoggingSetup
 
 from layout.MessageBox import MessageBox
-from layout.ErrorMessage import ErrorMessage
 
 
 # Keys
-config = configparser.ConfigParser()
-config.read('config.ini')
-STEAM_API_KEY = config['API_KEYS']['STEAM_API_KEY']
+settings = QSettings((os.path.join(os.path.dirname(__file__), "resources", "config", "config.ini")), QSettings.IniFormat)
+STEAM_API_KEY = settings.value("API_KEYS/STEAM_API_KEY")
 
 
 # Initialize the logger

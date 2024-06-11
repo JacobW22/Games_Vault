@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['Games Vault'],
+    ['G:/Games_Vault/Games_Vault/Games Vault.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('G:/Games_Vault/Games_Vault/layout', 'layout/'), ('G:/Games_Vault/Games_Vault/resources', 'resources/'), ('G:/Games_Vault/Games_Vault/database.py', '.'), ('G:/Games_Vault/Games_Vault/desktop_widget.py', '.'), ('G:/Games_Vault/Games_Vault/Epic.py', '.'), ('G:/Games_Vault/Games_Vault/Logging.py', '.'), ('G:/Games_Vault/Games_Vault/resources.qrc', '.'), ('G:/Games_Vault/Games_Vault/Steam.py', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -32,6 +32,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['G:\\Games_Vault\\Games_Vault\\resources\\icons\\app_icon.ico'],
 )
 coll = COLLECT(
     exe,

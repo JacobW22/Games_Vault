@@ -1,5 +1,4 @@
 import sys
-import configparser
 import requests
 import subprocess
 import os
@@ -13,7 +12,7 @@ from ctypes import wintypes
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QPushButton, QSystemTrayIcon, QMenu, QSizePolicy, QHBoxLayout, QMessageBox
 from PySide6.QtGui import QPixmap, QImage, QCursor, QIcon, QAction
-from PySide6.QtCore import QThread, Signal, QRect, Qt, QSize, QTimer, QPointF
+from PySide6.QtCore import QThread, Signal, QRect, Qt, QSize, QTimer, QPointF, QSettings
 
 from Steam import Steam
 from Epic import Epic
@@ -37,10 +36,8 @@ kernel32.SetConsoleTitleW("Games Vault")
 
 
 # Keys
-config = configparser.ConfigParser()
-config.read('config.ini')
-STEAM_API_KEY = config['API_KEYS']['STEAM_API_KEY']
-
+settings = QSettings((os.path.join(os.path.dirname(__file__), "resources", "config", "config.ini")), QSettings.IniFormat)
+STEAM_API_KEY = settings.value("API_KEYS/STEAM_API_KEY")
 
 # Initialize the logger
 logger = LoggingSetup.setup_logging()
@@ -399,11 +396,11 @@ class MainWindow(QMainWindow):
                 font.setPointSize(fit_width/10)
                 label.setFont(font)
                 label.setWordWrap(True)
-                label.setText(f'{url_and_appid[2]}')
+                label.setText(f"{url_and_appid[2]}")
                 label.setStyleSheet("background-color: rgb(42, 42, 42);")
 
 
-            container.setObjectName(f"{url_and_appid[2].encode().decode('unicode-escape')}")
+            container.setObjectName(f"{url_and_appid[2]}")
             container.setFixedSize(fit_width, fit_width*1.5)
 
             label.setMinimumWidth(fit_width)
@@ -439,7 +436,7 @@ class MainWindow(QMainWindow):
             font.setPointSize(fit_width/8)
             btn_label.setFont(font)
 
-            btn_label.setText(f"▶\n{url_and_appid[2].encode().decode('unicode-escape')}")
+            btn_label.setText(f"▶\n{url_and_appid[2]}")
             btn_label.setStyleSheet(
             """
                 QLabel {
@@ -626,7 +623,7 @@ class MainWindow(QMainWindow):
             user_info = self.database.execute_query(self.database.conn, sql_user).fetchone()
 
             steamid = user_info[1]
-            open_widget_on_start = user_info[2]
+            open_widget_on_start = settings.value("USER_SETTINGS/LAUNCH_WIDGET_ON_STARTUP", type=bool)
             img_cover_width = user_info[-6]
             img_cover_width_owned = user_info[-5]
             installed_epic_games = user_info[-3]
@@ -752,18 +749,17 @@ class MainWindow(QMainWindow):
 
 
     def UpdateSettings(self):
-        if self.database.conn:
-            query = "UPDATE user SET open_widget_on_start = ? WHERE id = 1;"
-
             match self.sender().text():
                 case "Off":
                     self.sender().setText("On")
                     self.sender().setStyleSheet("color: rgb(0, 255, 0);")
-                    self.database.execute_query(self.database.conn, query, [True])
+                    settings.setValue("USER_SETTINGS/LAUNCH_WIDGET_ON_STARTUP", True)
+                    settings.sync()
                 case "On":
                     self.sender().setText("Off")
                     self.sender().setStyleSheet("color: rgb(255, 0, 0);")
-                    self.database.execute_query(self.database.conn, query, [False])
+                    settings.setValue("USER_SETTINGS/LAUNCH_WIDGET_ON_STARTUP", False)
+                    settings.sync()
 
 
 

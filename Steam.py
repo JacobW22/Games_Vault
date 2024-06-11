@@ -1,8 +1,6 @@
 import os
 import vdf
-import configparser
 import requests
-import json
 
 from steam_web_api import Steam as steam_api
 from PIL import Image
@@ -10,7 +8,7 @@ from PIL.ImageQt import ImageQt
 
 from PySide6.QtWidgets import QFileDialog
 from PySide6.QtGui import QImage
-from PySide6.QtCore import QThread, Signal, Qt, QObject
+from PySide6.QtCore import QThread, Signal, Qt, QObject, QSettings
 
 from Logging import LoggingSetup
 
@@ -21,9 +19,8 @@ from layout.CircularAvatar import mask_image
 
 
 # Keys
-config = configparser.ConfigParser()
-config.read('config.ini')
-STEAM_API_KEY = config['API_KEYS']['STEAM_API_KEY']
+settings = QSettings((os.path.join(os.path.dirname(__file__), "resources", "config", "config.ini")), QSettings.IniFormat)
+STEAM_API_KEY = settings.value("API_KEYS/STEAM_API_KEY")
 
 
 # Initialize the logger

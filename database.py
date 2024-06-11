@@ -52,7 +52,6 @@ class Database:
         CREATE TABLE IF NOT EXISTS User (
             id INTEGER PRIMARY KEY,
             steam_id INTEGER,
-            open_widget_on_start BOOLEAN NOT NULL,
             widget_last_pos_x REAL,
             widget_last_pos_y REAL,
             widget_last_width INTEGER,
@@ -67,7 +66,7 @@ class Database:
         """
 
         sql_insert_into_user_table = """
-        INSERT INTO User VALUES (NULL, 0, FALSE, 0.0, 0.0, 0.0, 0.0, 140, 200, TRUE, 0, 0, 0);
+        INSERT INTO User VALUES (NULL, 0, 0.0, 0.0, 0.0, 0.0, 140, 200, TRUE, 0, 0, 0);
         """
 
         sql_create_installed_games_table  = """
