@@ -2,13 +2,12 @@ import sys
 import requests
 import subprocess
 import os
-import ctypes
 
 from steam_web_api import Steam as steam_api
 from PIL import Image
 from PIL.ImageQt import ImageQt
-from winotify import Notification
-from ctypes import wintypes
+from notifypy import Notify
+from pid import PidFile, PidFileError
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QPushButton, QSystemTrayIcon, QMenu, QSizePolicy, QHBoxLayout, QMessageBox
 from PySide6.QtGui import QPixmap, QImage, QCursor, QIcon, QAction
@@ -26,21 +25,16 @@ from layout.CircularAvatar import mask_image
 from desktop_widget import DesktopWidget
 
 
-# Windows taskbar and task manager process name config
-myappid = u'GamesVault_v1.0'
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-kernel32.SetConsoleTitleW.argtypes = [wintypes.LPCWSTR]
-kernel32.SetConsoleTitleW.restype = wintypes.BOOL
-kernel32.SetConsoleTitleW("Games Vault")
-
-
 # Keys
 settings = QSettings((os.path.join(os.path.dirname(__file__), "resources", "config", "config.ini")), QSettings.IniFormat)
 STEAM_API_KEY = settings.value("API_KEYS/STEAM_API_KEY")
 
 # Initialize the logger
 logger = LoggingSetup.setup_logging()
+
+
+# System notifications
+notification = Notify()
 
 
 class MainWindow(QMainWindow):
@@ -781,21 +775,19 @@ class MainWindow(QMainWindow):
 
         try:
             subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            Notification(
-                app_id="Games Vault",
-                title="Launching Game",
-                msg=f'{app_name}',
-                icon=os.path.join(os.path.dirname(__file__), "resources", "icons", "launch.png")
-            ).show()
+            notification.application_name = "Games Vault"
+            notification.title = "Launching Game"
+            notification.message = f"{app_name}"
+            notification.icon = os.path.join(os.path.dirname(__file__), "resources", "icons", "launch.png")
+            notification.send()
 
             self.showMinimized()
 
         except Exception as e:
-            Notification(
-                app_id="Games Vault",
-                title='Error Ocurred',
-                msg=f'Error occured while launching {app_name}'
-            ).show()
+            notification.application_name = "Games Vault"
+            notification.title = 'Error occured while launching'
+            notification.message = f"{app_name}"
+            notification.send()
             logger.error(f"LaunchGame: {e}")
 
 
@@ -867,26 +859,23 @@ class Worker(QThread):
                 logger.error(f"FindGameCovers: {e}")
 
         self.finished.emit()
-
-
+        
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-
-    widget = MainWindow()
-
-    # Create a mutex
-    mutex = ctypes.windll.kernel32.CreateMutexW(None, False, "MyUniqueAppNameMutex")
-    last_error = ctypes.windll.kernel32.GetLastError()
-
-    # If the mutex already exists, another instance is running
-    if last_error == 183:  # ERROR_ALREADY_EXISTS
+    
+    # Make sure only 1 instance is running at the same time
+    try:    
+        with PidFile(piddir=os.path.expanduser('~/Games Vault/')):
+            widget = MainWindow()   
+            widget.show()
+            sys.exit(app.exec())
+            
+    except PidFileError:
         QMessageBox.warning(None, "Error", "Another instance of this application is already running.")
         sys.exit(1)
+        
+    
 
-    widget.show()
-    sys.exit(app.exec())
 
-    # Release the mutex
-    ctypes.windll.kernel32.ReleaseMutex(mutex)
 
