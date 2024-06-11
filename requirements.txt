@@ -1,0 +1,9 @@
+notify_py
+pid
+pillow
+PyGetWindow
+PySide6
+python-steam-api
+requests
+vdf
+
