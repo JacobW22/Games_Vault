@@ -2,6 +2,7 @@ import sys
 import requests
 import subprocess
 import os
+import platform
 
 from steam_web_api import Steam as steam_api
 from PIL import Image
@@ -29,12 +30,18 @@ from desktop_widget import DesktopWidget
 settings = QSettings((os.path.join(os.path.dirname(__file__), "resources", "config", "config.ini")), QSettings.IniFormat)
 STEAM_API_KEY = settings.value("API_KEYS/STEAM_API_KEY")
 
+
 # Initialize the logger
 logger = LoggingSetup.setup_logging()
 
 
 # System notifications
 notification = Notify()
+
+
+# Force dark mode on Windows
+if platform.system() == "Windows":
+    sys.argv += ['-platform', 'windows:darkmode=2']
 
 
 class MainWindow(QMainWindow):

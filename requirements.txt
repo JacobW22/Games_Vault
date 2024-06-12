@@ -7,3 +7,6 @@ python-steam-api
 requests
 vdf
 
+# In case if didn't work
+pyobjc-framework-Quartz
+
