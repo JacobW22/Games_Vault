@@ -194,27 +194,28 @@ class Steam(QObject):
         self.thread = QThread()
         self.threads.append(self.thread)
 
-        if func == "FindInstalledSteamGames":
-            self.worker1 = Worker1(self.steam, self.closed_dialog, main_window, directory)
-            self.worker1.moveToThread(self.thread)  
+        match func:
+            case "FindInstalledSteamGames":
+                self.worker1 = Worker1(self.steam, self.closed_dialog, main_window, directory)
+                self.worker1.moveToThread(self.thread)
 
-            self.thread.started.connect(self.worker1.FindInstalledSteamGamesInThread)
-            self.worker1.finished.connect(self.thread.quit)
-            self.worker1.finished.connect(self.worker1.deleteLater)
-            self.worker1.progress.connect(self.UpdateSteamGamesNumberInDb)
-            self.thread.finished.connect(self.thread.deleteLater)
-            self.thread.start()
+                self.thread.started.connect(self.worker1.FindInstalledSteamGamesInThread)
+                self.worker1.finished.connect(self.thread.quit)
+                self.worker1.finished.connect(self.worker1.deleteLater)
+                self.worker1.progress.connect(self.UpdateSteamGamesNumberInDb)
+                self.thread.finished.connect(self.thread.deleteLater)
+                self.thread.start()
 
-        elif func == "FindOwnedSteamGames":
-            self.worker2 = Worker2(self.steam, main_window, steamid, directory)
-            self.worker2.setObjectName("owned_games")
-            self.worker2.moveToThread(self.thread)
+            case "FindOwnedSteamGames":
+                self.worker2 = Worker2(self.steam, main_window, steamid, directory)
+                self.worker2.setObjectName("owned_games")
+                self.worker2.moveToThread(self.thread)
 
-            self.worker2.progress.connect(main_window.UpdateGames)
-            self.worker2.progress.connect(main_window.AddGameToGUI_Owned)
-            self.thread.started.connect(self.worker2.FindOwnedSteamGamesInThread)
-            self.worker2.finished.connect(self.UpdateTotalUserPlaytimeInDb)
-            self.thread.start()
+                self.worker2.progress.connect(main_window.UpdateGames)
+                self.worker2.progress.connect(main_window.AddGameToGUI_Owned)
+                self.thread.started.connect(self.worker2.FindOwnedSteamGamesInThread)
+                self.worker2.finished.connect(self.UpdateTotalUserPlaytimeInDb)
+                self.thread.start()
 
 
 

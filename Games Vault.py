@@ -116,8 +116,6 @@ class MainWindow(QMainWindow):
         self.tray_menu.addAction(self.quit_action)
         self.tray_icon.setContextMenu(self.tray_menu)
 
-        self.setWindowIcon(app_icon)
-
 
         # Initialize objects
         self.Steam = Steam()
@@ -870,6 +868,8 @@ class Worker(QThread):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(":/icons/resources\icons/app_icon.png"))
+    app.setStyle('GTK')
     
     # Make sure only 1 instance is running at the same time
     try:    
