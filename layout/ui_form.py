@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'form.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.0
+## Created by: Qt User Interface Compiler version 6.7.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -203,7 +203,7 @@ class Ui_MainWindow(object):
         font2.setItalic(False)
         font2.setStyleStrategy(QFont.PreferDefault)
         self.user_display_name.setFont(font2)
-        self.user_display_name.setCursor(QCursor(Qt.ArrowCursor))
+        self.user_display_name.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
         self.user_display_name.setStyleSheet(u"color: rgb(0, 255, 0);")
         self.user_display_name.setScaledContents(False)
         self.user_display_name.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
@@ -428,7 +428,7 @@ class Ui_MainWindow(object):
         font4.setPointSize(12)
         font4.setStyleStrategy(QFont.PreferDefault)
         self.find_steam_directory.setFont(font4)
-        self.find_steam_directory.setCursor(QCursor(Qt.PointingHandCursor))
+        self.find_steam_directory.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.find_steam_directory.setText(u"\ud83d\udcc1 Find directory")
         self.find_steam_directory.setFlat(False)
 
@@ -505,7 +505,7 @@ class Ui_MainWindow(object):
         palette9.setBrush(QPalette.Disabled, QPalette.Button, brush10)
         self.find_epic_games_directory.setPalette(palette9)
         self.find_epic_games_directory.setFont(font4)
-        self.find_epic_games_directory.setCursor(QCursor(Qt.PointingHandCursor))
+        self.find_epic_games_directory.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.find_epic_games_directory.setText(u"\ud83d\udcc1 Find directory ")
         self.find_epic_games_directory.setFlat(False)
 
@@ -615,8 +615,8 @@ class Ui_MainWindow(object):
         sizePolicy4.setVerticalStretch(0)
         sizePolicy4.setHeightForWidth(self.open_widget.sizePolicy().hasHeightForWidth())
         self.open_widget.setSizePolicy(sizePolicy4)
-        self.open_widget.setCursor(QCursor(Qt.PointingHandCursor))
-        self.open_widget.setStyleSheet(u"color: rgb(0, 255,0);")
+        self.open_widget.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.open_widget.setStyleSheet(u"")
 
         self.horizontalLayout_18.addWidget(self.open_widget)
 
@@ -1148,7 +1148,7 @@ class Ui_MainWindow(object):
         self.launch_widget_on_start.setMinimumSize(QSize(0, 0))
         self.launch_widget_on_start.setMaximumSize(QSize(16777215, 16777215))
         self.launch_widget_on_start.setFont(font7)
-        self.launch_widget_on_start.setCursor(QCursor(Qt.PointingHandCursor))
+        self.launch_widget_on_start.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.launch_widget_on_start.setStyleSheet(u"color: rgb(255, 0, 0);")
 
         self.horizontalLayout_15.addWidget(self.launch_widget_on_start)
@@ -1171,7 +1171,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(MainWindow)

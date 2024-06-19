@@ -1,6 +1,7 @@
 debug.log
 __pycache__
 Games Vault.spec
+pysidedeploy.spec
 Games_Vault.pyproject.user
 .qtcreator
 /dist

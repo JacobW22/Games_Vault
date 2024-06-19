@@ -2,7 +2,6 @@
     "files": [
         "Games Vault.py",
         "resources.qrc",
-        "config.ini",
         ".gitignore",
         "Steam.py",
         "Epic.py",
@@ -19,7 +18,6 @@
         "desktop_widget.py",
         "layout/desktop_widget_form.ui",
         "layout/desktop_widget_form.py",
-        "Logging.py",
-        "Games Vault.py"
+        "Logging.py"
     ]
 }
