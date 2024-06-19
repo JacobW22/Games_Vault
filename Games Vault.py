@@ -77,7 +77,8 @@ class MainWindow(QMainWindow):
 
         self.ui.change_steam_id_container.layout().addWidget(self.change_steam_id)
 
-        self.ui.tabWidget.setStyleSheet("""
+        self.ui.tabWidget.setStyleSheet(
+        """
             QTabBar::tab {
                 border-top-left-radius: 10px;
                 border-top-right-radius: 10px;
@@ -93,6 +94,52 @@ class MainWindow(QMainWindow):
                 background: rgba(0, 255, 0, 0);
                 color: rgb(0, 255, 0);
             };
+        """
+        )
+
+
+        btn_stylesheet = (
+        """
+            QPushButton {
+                background-color: #424242;
+                border: 2px solid #646464;
+                padding: 5px;
+                border-radius: 8px;
+            }
+
+            QPushButton:hover {
+                background-color: rgba(60, 60, 60, 0.5);
+                color: rgb(0, 255, 0);
+            }
+
+            QPushButton:pressed {
+                background-color: rgba(0, 0, 0, 0.5);
+                color: rgb(0, 255, 0);
+            }
+        """
+        )
+
+        self.ui.find_steam_directory.setStyleSheet(btn_stylesheet)
+        self.ui.find_epic_games_directory.setStyleSheet(btn_stylesheet)
+        self.ui.open_widget.setStyleSheet(
+        """
+            QPushButton {
+                background-color: #424242;
+                border: 2px solid #646464;
+                border-radius: 8px;
+                padding-left: 8px;
+                padding-right: 8px;
+                color: rgb(0, 255, 0);
+            }
+
+            QPushButton:hover {
+                background-color: rgba(60, 60, 60, 0.5);
+            }
+
+            QPushButton:pressed {
+                background-color: rgba(0, 0, 0, 0.5);
+                color: rgb(0, 255, 0);
+            }
         """)
 
 
@@ -221,6 +268,7 @@ class MainWindow(QMainWindow):
             QPushButton {
                 font-size: 20px; padding: 15px;
             }
+
             QPushButton:hover {
                 color: rgb(0, 255,0);
             }
@@ -418,6 +466,7 @@ class MainWindow(QMainWindow):
                 QPushButton {
                     background-color: rgba(0, 0, 0, 0);
                     color: transparent;
+                    border: 0;
                 }
 
                 QPushButton:pressed {
@@ -442,6 +491,7 @@ class MainWindow(QMainWindow):
                     background-color: rgba(0, 0, 0, 0);
                     color: transparent;
                 }
+
                 QLabel:hover {
                     background-color: rgba(0, 0, 0, 0.5);
                     color: rgb(60, 255, 0);
@@ -451,7 +501,6 @@ class MainWindow(QMainWindow):
                     background-color: rgba(0, 0, 0, 0.8);
                     color: transparent;
                 }
-
             """
             )
             self.play_game = QAction(f"{url_and_appid[2]}", self)
@@ -511,6 +560,7 @@ class MainWindow(QMainWindow):
                 QPushButton {
                     background-color: rgba(0, 0, 0, 0);
                     color: transparent;
+                    border: 0;
                 }
 
                 QPushButton:pressed {
@@ -589,9 +639,19 @@ class MainWindow(QMainWindow):
         label.setStyleSheet(
             """
                 QPushButton {
-                    text-align:left;
+                    text-align: left;
+                    background-color: #424242;
+                    border: 2px solid #646464;
+                    border-radius: 8px;
                 }
+
+                QPushButton:hover {
+                    background-color: rgba(60, 60, 60, 0.5);
+                    color: rgb(0, 255, 0);
+                }
+
                 QPushButton:pressed {
+                    background-color: rgba(0, 0, 0, 0.5);
                     color: rgb(0, 255, 0);
                 }
             """
@@ -870,7 +930,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(":/icons/resources\icons/app_icon.png"))
     app.setStyle('GTK')
-    
+
     # Make sure only 1 instance is running at the same time
     try:    
         with PidFile(piddir=os.path.expanduser('~/Games Vault/')):

@@ -200,7 +200,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
@@ -2006,7 +2006,7 @@
                         <cursorShape>PointingHandCursor</cursorShape>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">color: rgb(0, 255,0);</string>
+                        <string notr="true"/>
                        </property>
                        <property name="text">
                         <string>Widget ⧉</string>

@@ -22,7 +22,7 @@ class StreamToLogger:
 class LoggingSetup:
     @staticmethod
     def setup_logging():
-        logging.basicConfig(level=logging.DEBUG,
+        logging.basicConfig(level=logging.ERROR,
                             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                             handlers=[
                                 # logging.StreamHandler(sys.stdout), # Output to console
