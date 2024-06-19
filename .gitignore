@@ -1,2 +1,7 @@
 debug.log
 __pycache__
+Games_Vault.pyproject.user
+.qtcreator
+/dist
+/build
+/temp
