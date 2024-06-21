@@ -124,7 +124,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 1198, 560))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 1198, 574))
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -353,7 +353,7 @@ class Ui_MainWindow(object):
         self.scrollArea_3.setWidgetResizable(True)
         self.scrollAreaWidgetContents_3 = QWidget()
         self.scrollAreaWidgetContents_3.setObjectName(u"scrollAreaWidgetContents_3")
-        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 1196, 173))
+        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 1196, 182))
         palette7 = QPalette()
         palette7.setBrush(QPalette.Active, QPalette.Window, brush5)
         palette7.setBrush(QPalette.Inactive, QPalette.Window, brush5)
@@ -553,7 +553,7 @@ class Ui_MainWindow(object):
         self.scrollArea_2.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 1198, 560))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 1198, 574))
         sizePolicy.setHeightForWidth(self.scrollAreaWidgetContents_2.sizePolicy().hasHeightForWidth())
         self.scrollAreaWidgetContents_2.setSizePolicy(sizePolicy)
         palette10 = QPalette()
@@ -703,18 +703,15 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_8.addItem(self.horizontalSpacer)
 
-        self.widget_10 = QWidget(self.search_widget_container)
-        self.widget_10.setObjectName(u"widget_10")
-        sizePolicy5.setHeightForWidth(self.widget_10.sizePolicy().hasHeightForWidth())
-        self.widget_10.setSizePolicy(sizePolicy5)
-        self.widget_10.setStyleSheet(u"border: 2px solid white;;\n"
-"border-radius: 15px;\n"
-"background-color: rgba(0, 0, 0, 0);")
-        self.horizontalLayout_9 = QHBoxLayout(self.widget_10)
+        self.search_widget_2 = QWidget(self.search_widget_container)
+        self.search_widget_2.setObjectName(u"search_widget_2")
+        sizePolicy5.setHeightForWidth(self.search_widget_2.sizePolicy().hasHeightForWidth())
+        self.search_widget_2.setSizePolicy(sizePolicy5)
+        self.horizontalLayout_9 = QHBoxLayout(self.search_widget_2)
         self.horizontalLayout_9.setSpacing(5)
         self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
         self.horizontalLayout_9.setContentsMargins(10, 2, 10, 2)
-        self.label_5 = QLabel(self.widget_10)
+        self.label_5 = QLabel(self.search_widget_2)
         self.label_5.setObjectName(u"label_5")
         sizePolicy1.setHeightForWidth(self.label_5.sizePolicy().hasHeightForWidth())
         self.label_5.setSizePolicy(sizePolicy1)
@@ -742,7 +739,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_9.addWidget(self.label_5)
 
-        self.search_games = QLineEdit(self.widget_10)
+        self.search_games = QLineEdit(self.search_widget_2)
         self.search_games.setObjectName(u"search_games")
         sizePolicy6 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         sizePolicy6.setHorizontalStretch(0)
@@ -777,7 +774,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_9.addWidget(self.search_games)
 
 
-        self.horizontalLayout_8.addWidget(self.widget_10)
+        self.horizontalLayout_8.addWidget(self.search_widget_2)
 
 
         self.horizontalLayout_11.addWidget(self.search_widget_container)
@@ -801,7 +798,7 @@ class Ui_MainWindow(object):
         self.Installed_games_content = QWidget()
         self.Installed_games_content.setObjectName(u"Installed_games_content")
         self.Installed_games_content.setEnabled(True)
-        self.Installed_games_content.setGeometry(QRect(0, 0, 1198, 509))
+        self.Installed_games_content.setGeometry(QRect(0, 0, 1198, 525))
         sizePolicy1.setHeightForWidth(self.Installed_games_content.sizePolicy().hasHeightForWidth())
         self.Installed_games_content.setSizePolicy(sizePolicy1)
         self.Installed_games_content.setMinimumSize(QSize(0, 0))
@@ -847,7 +844,7 @@ class Ui_MainWindow(object):
         self.scrollArea_4.setWidgetResizable(True)
         self.scrollAreaWidgetContents_4 = QWidget()
         self.scrollAreaWidgetContents_4.setObjectName(u"scrollAreaWidgetContents_4")
-        self.scrollAreaWidgetContents_4.setGeometry(QRect(0, 0, 1198, 560))
+        self.scrollAreaWidgetContents_4.setGeometry(QRect(0, 0, 1198, 574))
         sizePolicy.setHeightForWidth(self.scrollAreaWidgetContents_4.sizePolicy().hasHeightForWidth())
         self.scrollAreaWidgetContents_4.setSizePolicy(sizePolicy)
         palette15 = QPalette()
@@ -932,7 +929,7 @@ class Ui_MainWindow(object):
         palette16.setBrush(QPalette.Disabled, QPalette.Accent, brush12)
         self.set_img_cover_width_owned.setPalette(palette16)
         self.set_img_cover_width_owned.setStyleSheet(u"")
-        self.set_img_cover_width_owned.setMinimum(94)
+        self.set_img_cover_width_owned.setMinimum(100)
         self.set_img_cover_width_owned.setMaximum(1080)
         self.set_img_cover_width_owned.setValue(200)
         self.set_img_cover_width_owned.setOrientation(Qt.Horizontal)
@@ -973,18 +970,16 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_23.addItem(self.horizontalSpacer_11)
 
-        self.widget_20 = QWidget(self.search_widget_container_2)
-        self.widget_20.setObjectName(u"widget_20")
-        sizePolicy5.setHeightForWidth(self.widget_20.sizePolicy().hasHeightForWidth())
-        self.widget_20.setSizePolicy(sizePolicy5)
-        self.widget_20.setStyleSheet(u"border: 2px solid white;;\n"
-"border-radius: 15px;\n"
-"background-color: rgba(0, 0, 0, 0);")
-        self.horizontalLayout_24 = QHBoxLayout(self.widget_20)
+        self.search_widget = QWidget(self.search_widget_container_2)
+        self.search_widget.setObjectName(u"search_widget")
+        sizePolicy5.setHeightForWidth(self.search_widget.sizePolicy().hasHeightForWidth())
+        self.search_widget.setSizePolicy(sizePolicy5)
+        self.search_widget.setStyleSheet(u"")
+        self.horizontalLayout_24 = QHBoxLayout(self.search_widget)
         self.horizontalLayout_24.setSpacing(5)
         self.horizontalLayout_24.setObjectName(u"horizontalLayout_24")
         self.horizontalLayout_24.setContentsMargins(10, 2, 10, 2)
-        self.label_7 = QLabel(self.widget_20)
+        self.label_7 = QLabel(self.search_widget)
         self.label_7.setObjectName(u"label_7")
         sizePolicy1.setHeightForWidth(self.label_7.sizePolicy().hasHeightForWidth())
         self.label_7.setSizePolicy(sizePolicy1)
@@ -1007,7 +1002,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_24.addWidget(self.label_7)
 
-        self.search_games_owned = QLineEdit(self.widget_20)
+        self.search_games_owned = QLineEdit(self.search_widget)
         self.search_games_owned.setObjectName(u"search_games_owned")
         sizePolicy6.setHeightForWidth(self.search_games_owned.sizePolicy().hasHeightForWidth())
         self.search_games_owned.setSizePolicy(sizePolicy6)
@@ -1034,7 +1029,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_24.addWidget(self.search_games_owned)
 
 
-        self.horizontalLayout_23.addWidget(self.widget_20)
+        self.horizontalLayout_23.addWidget(self.search_widget)
 
 
         self.horizontalLayout_20.addWidget(self.search_widget_container_2)
@@ -1058,7 +1053,7 @@ class Ui_MainWindow(object):
         self.Owned_games_content = QWidget()
         self.Owned_games_content.setObjectName(u"Owned_games_content")
         self.Owned_games_content.setEnabled(True)
-        self.Owned_games_content.setGeometry(QRect(0, 0, 1198, 509))
+        self.Owned_games_content.setGeometry(QRect(0, 0, 1198, 530))
         sizePolicy1.setHeightForWidth(self.Owned_games_content.sizePolicy().hasHeightForWidth())
         self.Owned_games_content.setSizePolicy(sizePolicy1)
         self.Owned_games_content.setMinimumSize(QSize(0, 0))
@@ -1100,7 +1095,7 @@ class Ui_MainWindow(object):
         self.scrollArea_5.setWidgetResizable(True)
         self.scrollAreaWidgetContents_5 = QWidget()
         self.scrollAreaWidgetContents_5.setObjectName(u"scrollAreaWidgetContents_5")
-        self.scrollAreaWidgetContents_5.setGeometry(QRect(0, 0, 1180, 542))
+        self.scrollAreaWidgetContents_5.setGeometry(QRect(0, 0, 1158, 542))
         sizePolicy.setHeightForWidth(self.scrollAreaWidgetContents_5.sizePolicy().hasHeightForWidth())
         self.scrollAreaWidgetContents_5.setSizePolicy(sizePolicy)
         palette20 = QPalette()
@@ -1171,7 +1166,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(2)
 
 
         QMetaObject.connectSlotsByName(MainWindow)

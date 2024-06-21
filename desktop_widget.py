@@ -31,13 +31,15 @@ class DesktopWidget(QMainWindow):
 
 
         # Minimize all windows except the current one
-        windows = gw.getAllWindows()
-        current_window = gw.getActiveWindow()._hWnd
-        for window in windows:
-            if window._hWnd != current_window:
-                window = gw.Win32Window(window._hWnd)
-                window.minimize()
-
+        try:
+            windows = gw.getAllWindows()
+            current_window = gw.getActiveWindow()._hWnd
+            for window in windows:
+                if window._hWnd != current_window:
+                    window = gw.Win32Window(window._hWnd)
+                    window.minimize()
+        except Exception:
+            pass
 
 
     def mousePressEvent(self, event):

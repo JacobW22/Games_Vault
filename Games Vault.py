@@ -82,6 +82,7 @@ class MainWindow(QMainWindow):
             QTabBar::tab {
                 border-top-left-radius: 10px;
                 border-top-right-radius: 10px;
+                color: rgb(255, 255, 255);
                 padding: 5px;
                 margin: 5px;
             }
@@ -96,7 +97,6 @@ class MainWindow(QMainWindow):
             };
         """
         )
-
 
         btn_stylesheet = (
         """
@@ -119,6 +119,19 @@ class MainWindow(QMainWindow):
         """
         )
 
+        search_widget_stylesheet = (
+        """
+            QWidget {
+                border: 2px solid white;
+                border-radius: 8px;
+                background-color: rgba(0, 0, 0, 0);
+            };
+        """
+        )
+
+        self.ui.search_widget.setStyleSheet(search_widget_stylesheet)
+        self.ui.search_widget_2.setStyleSheet(search_widget_stylesheet)
+
         self.ui.find_steam_directory.setStyleSheet(btn_stylesheet)
         self.ui.find_epic_games_directory.setStyleSheet(btn_stylesheet)
         self.ui.open_widget.setStyleSheet(
@@ -140,14 +153,14 @@ class MainWindow(QMainWindow):
                 background-color: rgba(0, 0, 0, 0.5);
                 color: rgb(0, 255, 0);
             }
-        """)
+        """
+        )
 
 
         # System tray menu and app icon setup
         self.tray_icon = QSystemTrayIcon()
-        app_icon = QIcon(":/icons/resources\icons/app_icon.png")
 
-        self.tray_icon.setIcon(app_icon)
+        self.tray_icon.setIcon(QIcon("resources/icons/app_icon.ico"))
         self.tray_icon.setToolTip("Games Vault")
 
         self.tray_menu = QMenu()
@@ -264,15 +277,22 @@ class MainWindow(QMainWindow):
         close_widget_btn = QPushButton()
         close_widget_btn.setText("Close Active Widget")
         close_widget_btn.setMaximumWidth(250)
-        close_widget_btn.setStyleSheet("""
+        close_widget_btn.setStyleSheet(
+        """
             QPushButton {
-                font-size: 20px; padding: 15px;
+                font-size: 20px;
+                background-color: #424242;
+                border: 2px solid #646464;
+                border-radius: 8px;
+                padding: 15px;
             }
 
             QPushButton:hover {
+                background-color: rgba(60, 60, 60, 0.5);
                 color: rgb(0, 255,0);
             }
-        """)
+        """
+        )
         close_widget_btn.setCursor(Qt.PointingHandCursor)
 
         close_widget_btn.clicked.connect(self.CloseWidget)
@@ -928,7 +948,7 @@ class Worker(QThread):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(":/icons/resources\icons/app_icon.png"))
+    app.setWindowIcon(QIcon("resources/icons/app_icon.ico"))
     app.setStyle('GTK')
 
     # Make sure only 1 instance is running at the same time
